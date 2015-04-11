@@ -1,5 +1,6 @@
 package feh.tec.agents.schedule
 
+import akka.util.Timeout
 import feh.tec.agents.comm.Message.HasValues
 import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
@@ -47,4 +48,9 @@ trait CommonAgentDefs {
     }
   }
 
+}
+
+object CommonAgentDefs{
+  case class Timeouts( extraScopeTimeout: Timeout
+                       )
 }

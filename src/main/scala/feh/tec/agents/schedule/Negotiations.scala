@@ -10,7 +10,7 @@ trait ANegotiation extends Negotiation
   with Issues.Negotiation
   with DomainsIterating.Negotiation
 {
-  def discipline: Discipline
+  addNegVarDefaults(NegVars.Discipline -> None)
 }
 
 
