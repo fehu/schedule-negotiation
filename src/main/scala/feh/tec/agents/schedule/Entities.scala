@@ -9,7 +9,7 @@ object DaysOfWeek extends Enumeration{
 }
 
 case class Class[ProfName, Time]( discipline: Discipline
-                                , dayOfWeek : DaysOfWeek
+                                , dayOfWeek : DayOfWeek
                                 , begins    : Time
                                 , ends      : Time
                                 , group     : GroupId

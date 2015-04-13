@@ -6,10 +6,10 @@ import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{NegotiationReactionBuilder, Negotiating}
 import feh.tec.agents.comm.negotiations._
 import Establishing._
-import feh.tec.agents.util.OneToOneNegotiation
+import feh.tec.agents.schedule.Messages.{ClassesProposal, CounterpartsFound}
 import scala.collection.mutable
 import feh.util._
-import scala.concurrent.duration._
+import CommonAgentDefs._
 
 import scala.concurrent.Await
 
@@ -26,6 +26,10 @@ class GroupAgent( val id          : NegotiatingAgentId
   with GroupAgentNegotiating
   with GroupAgentProposals
 {
+  type Time
+
+  val classesDecider: ClassesBasicPreferencesDecider[Time] = ???
+
   def messageReceived: PartialFunction[Message, Unit] = handleNewNegotiations
 
   def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] =
@@ -55,21 +59,51 @@ object GroupAgent{
  *
  */
 trait GroupAgentProposals{
-  def nextProposalFor(d: Discipline): Proposals.Proposal = ???
+  self: NegotiatingAgent with CommonAgentDefs =>
+
+  val classesDecider: ClassesBasicPreferencesDecider[Time]
+
+  def nextProposalFor(neg: Negotiation): ClassesProposal[Time] = {
+    val day  = classesDecider.whatDay_? (neg)
+    val time = classesDecider.whatTime_?(neg, day)
+    val len  = classesDecider howLong_? (neg, day, time)
+
+    ClassesProposal(neg.id, day, time, len)
+  }
 }
 
 trait GroupAgentNegotiating{
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
 
-  def nextProposalFor(d: Discipline): Proposals.Proposal
+  def handleMessage = handleNegotiationStart orElse ???
 
-  def negotiationsOver(d: Discipline) = negotiations.filter(_._2.get(NegVars.Discipline) contains d)
+  def nextProposalFor(neg: Negotiation): Proposals.Proposal
+
+  def negotiationsOver(d: Discipline) = negotiations.filter(_._2(NegVars.Discipline) == d)
 
   def startNegotiatingOver(d: Discipline): Unit = {
-    val counterparts = negotiationsOver(d).flatMap(_._2.get(OneToOneNegotiation.NegotiatingWith))
-    val proposal = nextProposalFor(d)
-    counterparts foreach (_ ! proposal)
+    val counterparts = negotiatingWithOver(d)
+    val n = counterparts.size
+
+    counterparts foreach {
+      case (neg, counterpart) =>
+        counterpart ! CounterpartsFound(neg.id, n)
+    }
   }
+
+  protected def negotiatingWithOver(d: Discipline) = negotiationsOver(d).flatMap{
+    case (_, neg) => counterpartOpt(neg).map(neg -> _)
+  }
+
+  def handleNegotiationStart: PartialFunction[Message, Unit] = {  // todo: maybe wait until all discipline priorities established?
+    case Messages.DisciplinePriorityEstablished(negId, priority, _) =>
+      val neg = negotiation(negId)
+      neg.set(NegVars.DisciplinePriority)(priority)
+      neg.set(NegotiationVar.State)(NegotiationState.Negotiating)
+      val proposal = nextProposalFor(neg)
+      counterpart(neg) ! proposal
+  }
+
 }
 
 trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegotiations {

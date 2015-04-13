@@ -4,13 +4,17 @@ import feh.tec.agents.comm.{NegotiationVar, NegotiationId, Negotiation}
 import feh.tec.agents.comm.negotiations.{DomainsIterating, Issues, Proposals}
 import feh.tec.agents.util.OneToOneNegotiation
 
-trait ANegotiation extends Negotiation
+trait ANegotiation[Time] extends Negotiation
   with OneToOneNegotiation
   with Proposals.Negotiation
   with Issues.Negotiation
   with DomainsIterating.Negotiation
 {
   addNegVarDefaults(NegVars.Discipline -> None)
+
+  forIssue(Vars.Day       , Nil)
+  forIssue(Vars.Time[Time], Nil)
+  forIssue(Vars.Length    , Nil)
 }
 
 

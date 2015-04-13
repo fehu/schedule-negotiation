@@ -6,9 +6,13 @@ import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationEstablishingMessage, NegotiationProposition, NegotiationAcceptance, NegotiationRejection}
+import feh.tec.agents.comm.negotiations.Var
+import feh.tec.agents.util.OneToOneNegotiation
 
 trait CommonAgentDefs {
   agent: NegotiatingAgent =>
+
+  type Time
 
   /** a negotiation that is easily accessed from others negotiations */
   lazy val SharedNegotiation = new SharedNegotiation(varUpdatedNotification) { }
@@ -22,8 +26,7 @@ trait CommonAgentDefs {
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(withAg.id.name + " -- " + this.id.name)
 
   protected def mkNegotiationWith(withAg: NegotiatingAgentRef, disc: Discipline): Negotiation =
-    new Negotiation(negotiationWithId(withAg), varUpdatedNotification) with ANegotiation { def discipline = disc }
-
+    new Negotiation(negotiationWithId(withAg), varUpdatedNotification) with ANegotiation[Time] { def discipline = disc }
 
 
   def negotiationProposition(vals: (Var[Any], Any)*) = new NegotiationProposition{
@@ -53,4 +56,11 @@ trait CommonAgentDefs {
 object CommonAgentDefs{
   case class Timeouts( extraScopeTimeout: Timeout
                        )
+
+  def counterpartOpt(neg: Negotiation) = neg.get(OneToOneNegotiation.NegotiatingWith)
+  def counterpart(neg: Negotiation)    = counterpartOpt(neg).get
+
+  def disciplineOpt(neg: Negotiation)  = neg.get(NegVars.Discipline)
+  def discipline(neg: Negotiation)     = disciplineOpt(neg).get
+
 }
