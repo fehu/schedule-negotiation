@@ -91,7 +91,9 @@ trait ProfessorAgentNegotiatingWithGroup{
       val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, Some(prop.time.asInstanceOf[Time]))
 
       val resp = if(a > assessedThreshold(neg)) {
-                                                  neg.set(Issues.Vars.Issue(Vars.Day))
+                                                  neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
+                                                  neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time.asInstanceOf[Time])
+                                                  neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
                                                   startSearchingForClassRoom(neg)
                                                   ClassesAcceptance(neg.id, prop.uuid)
                                                 }
@@ -133,11 +135,11 @@ trait ProfessorAgentNegotiationPropositionsHandling
   def handleNegotiationPropositions: PartialFunction[Message, Unit] = {
     case msg: NegotiationProposition =>
       val disc = getFromMsg(msg, Vars.Discipline)
-      val propOrRecall = getFromMsg(msg, Vars.PropOrRecall)
+//      val propOrRecall = getFromMsg(msg, Vars.PropOrRecall)
 
-      if (propOrRecall == Vars.New) msg.sender !
-        (if (canTeach(disc)) startNegotiationWith(msg.sender, disc) else negotiationRejection)
-      else recallRequested(msg)
+//      if (propOrRecall == Vars.New)
+//      else recallRequested(msg)
+      msg.sender ! (if (canTeach(disc)) startNegotiationWith(msg.sender, disc) else negotiationRejection)
   }
 
   /** creates a negotiation and guards it */

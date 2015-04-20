@@ -64,11 +64,13 @@ trait GroupAgentProposals{
   val classesDecider: ClassesBasicPreferencesDecider[Time]
 
   def nextProposalFor(neg: Negotiation): ClassesProposal[Time] = {
-    val day  = classesDecider.whatDay_? (neg)
-    val time = classesDecider.whatTime_?(neg, day)
-    val len  = classesDecider howLong_? (neg, day, time)
+    import classesDecider._
 
-    ClassesProposal(neg.id, day, time, len)
+    val d = basedOn(disciplineParam -> neg(NegVars.Discipline))
+
+    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
+
+    ClassesProposal(neg.id, day.value.left.get, time.value.left.get, len.value.left.get) // todo .value.left.get
   }
 }
 
