@@ -10,10 +10,12 @@ trait AbstractDecider{
 
   case class Decision[+T](value: Either[T, Throwable])
 
-  abstract class ParamDescriptor(val name: String)
-  case class Param[T](d: ParamDescriptor, value: T) // todo: a lot of code to get value: d.value.left.get.asInstanceOf[...]
+  abstract class ParamDescriptor[T](val name: String)
+  case class Param[T](d: ParamDescriptor[T], value: T) // todo: a lot of code to get value: d.value.left.get.asInstanceOf[...]
+
+  def getParam[T](d: ParamDescriptor[T], in: Seq[Param[_]]): Param[T] = in.find(_.d == d).get.asInstanceOf[Param[T]]
   
-  implicit def pairToParam[T](p: (ParamDescriptor, T)): Param[T] = Param(p._1, p._2)
+  implicit def pairToParam[T](p: (ParamDescriptor[T], T)): Param[T] = Param(p._1, p._2)
 
   trait DecideInterface{
     def decide[A](a: DecisionDescriptor[A]): Decision[A]
@@ -70,10 +72,10 @@ trait ClassesBasicPreferencesDecider[Time] extends AbstractDecider{
   object howLong_?  extends  DecisionDescriptor[Int]("length") // minutes
 
 //  object negotiationParam extends ParamDescriptor("negotiation")
-  object disciplineParam  extends ParamDescriptor("discipline")
-  object dayParam         extends ParamDescriptor("day")
-  object timeParam        extends ParamDescriptor("time")
-  object lengthParam      extends ParamDescriptor("length")
+  object disciplineParam  extends ParamDescriptor[Discipline]("discipline")
+  object dayParam         extends ParamDescriptor[DayOfWeek]("day")
+  object timeParam        extends ParamDescriptor[Any]("time")
+  object lengthParam      extends ParamDescriptor[Int]("length")
 
 }
 
@@ -96,16 +98,3 @@ trait CounterDecider {
   def counterPropose[R](prop: Proposal)(f: => R): R
 }
 
-
-
-
-
-
-
-
-// ???
-trait AtomicDecider{
-  self: AtomicDecider =>
-
-  def atomic()
-}

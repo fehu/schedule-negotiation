@@ -3,7 +3,6 @@ package feh.tec.agents.schedule
 import java.util.UUID
 
 import akka.actor.ActorLogging
-import feh.tec.agents.comm.ControllerMessage.Begin
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{Reporting, SystemSupport}
 
@@ -28,17 +27,22 @@ class CoordinatorAgent( val id              : SystemAgentId
   def nameForAgent(role: NegotiationRole, index: Int): String = role.role.filterNot(_.isWhitespace) + "-" + index
 
   def systemMessageReceived: PartialFunction[SystemMessage, Unit] = {
-    case _: SystemMessage.Start => start()
-    case _: SystemMessage.Stop  => stop()
+    case _: SystemMessage.Start       => start()
+    case _: SystemMessage.Stop        => stop()
+    case _: SystemMessage.Initialize  => initialize()
+    case _: ControllerMessage.Begin   => startNegotiation()
   }
 
   def initializeNegotiator(ref: NegotiatingAgentRef): Unit = ref ! SystemMessage.Initialize(agentInit(ref.id.role): _*)(this.ref)
 
-  def agentInit: NegotiationRole => Seq[SystemMessage] = ???
+  def agentInit: NegotiationRole => Seq[SystemMessage] = {
+    case role@GroupAgent.Role =>
+      SystemMessage.SetScope(SharedNegotiation.id, negotiatorsByRole(ProfessorAgent.Role.FullTime).toSet) :: Nil
+    case _ => Nil
+  }
 
   def messageReceived: PartialFunction[Message, Unit] = {
     case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) => negotiatorsByRole(ProfessorAgent.Role.PartTime)
-    case _: Begin => startNegotiation()
   }
 
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}

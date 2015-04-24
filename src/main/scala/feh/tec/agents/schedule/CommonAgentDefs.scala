@@ -5,17 +5,20 @@ import feh.tec.agents.comm.Message.HasValues
 import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
 import feh.tec.agents.comm._
+import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationEstablishingMessage, NegotiationProposition, NegotiationAcceptance, NegotiationRejection}
 import feh.tec.agents.comm.negotiations.Var
 import feh.tec.agents.util.OneToOneNegotiation
 
 trait CommonAgentDefs {
-  agent: NegotiatingAgent =>
+  agent: NegotiatingAgent with DynamicNegotiations =>
 
   type Time
 
   /** a negotiation that is easily accessed from others negotiations */
   lazy val SharedNegotiation = new SharedNegotiation(varUpdatedNotification) { }
+
+  add(SharedNegotiation)
   
   override lazy val Reporting = new ReportingNegotiationsConfig //(messageReceived = true, messageSent = true)
 

@@ -1,5 +1,6 @@
 package feh.tec.agents.schedule
 
+import akka.actor.ActorLogging
 import akka.util.Timeout
 import feh.tec.agents.comm.NegotiationVar.Scope
 import feh.tec.agents.comm._
@@ -25,10 +26,19 @@ class GroupAgent( val id          : NegotiatingAgentId
   with GroupAgentNegotiationPropositionsHandling
   with GroupAgentNegotiating
   with GroupAgentProposals
+  with ActorLogging
 {
-  type Time
+  type Time = feh.tec.agents.schedule.Time
 
-  val classesDecider: ClassesBasicPreferencesDecider[Time] = ???
+  implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
+
+  val timetable = new MutableTimetable
+
+  val classesDecider = new ClassesBasicPreferencesDeciderImplementations[Time]{
+    def basedOn(p: Param[_]*): AbstractDecideInterface =
+      new DecideRandom(p, lengthDiscr = 90, toAttend(getParam(disciplineParam, p).value), timetable)
+  }
+
 
   def messageReceived: PartialFunction[Message, Unit] = handleNewNegotiations
 
@@ -42,6 +52,7 @@ class GroupAgent( val id          : NegotiatingAgentId
 
   def start(): Unit = {
     startSearchingProfessors()
+    log.debug("GroupAgent start")
   }
 
   def stop(): Unit = ???

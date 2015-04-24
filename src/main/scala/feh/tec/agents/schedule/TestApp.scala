@@ -37,6 +37,10 @@ object TestApp extends App{
   println("profsCanTeach: " + profsCanTeach)
   println("groups: " + groups)
 
+  println("size disciplines: " + disciplinesSelection.size)
+  println("size profsCanTeach: " + profsCanTeach.size)
+  println("size groups: " + groups.size)
+
 
 
   implicit lazy val asys = ActorSystem.create("test")
@@ -67,6 +71,7 @@ object TestApp extends App{
                       ag => {
                         import ag._
                         controller ! SystemMessage.Start()
+                        controller ! SystemMessage.Initialize()
                         Thread sleep 300
                         controller ! ControllerMessage.Begin()
                       })
