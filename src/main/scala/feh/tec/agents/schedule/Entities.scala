@@ -36,7 +36,7 @@ case class ClassRoomId() // todo
 trait TimeDescriptor[Time]{
   def domain: Stream[Time]
 
-  def randomly: Time
+  def randomly: Stream[Time]
 
   def toMinutes(t: Time): Int
   def fromMinutes(t: Int): Time
@@ -48,16 +48,16 @@ trait TimeDescriptor[Time]{
 }
 
 // todo: not every week ?
-trait Timetable[Time] extends TimeTableRead[Time] with TimeTableWrite[Time]
+trait TimetableAccess[Time] extends TimeTableRead[Time] with TimeTableWrite[Time]
 
 trait TimeTableRead[Time]{
-  def busyAt(day: DayOfWeek, time: Time): Boolean
-  def busyAt(day: DayOfWeek, from: Time, to: Time): Boolean
-
   def classAt(day: DayOfWeek, time: Time): Option[ClassId]
   def classesAt(day: DayOfWeek, from: Time, to: Time): Seq[ClassId]
 
   def allClasses: Seq[ClassId]
+
+  def busyAt(day: DayOfWeek, time: Time): Boolean = classAt(day, time).nonEmpty
+  def busyAt(day: DayOfWeek, from: Time, to: Time): Boolean = classesAt(day, from, to).nonEmpty
 }
 
 trait TimeTableWrite[Time]{

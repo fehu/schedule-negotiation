@@ -28,7 +28,7 @@ class CoordinatorAgent( val id              : SystemAgentId
   def nameForAgent(role: NegotiationRole, index: Int): String = role.role.filterNot(_.isWhitespace) + "-" + index
 
   def systemMessageReceived: PartialFunction[SystemMessage, Unit] = {
-    case _: SystemMessage.Start => log.debug("START~!!!!!"); start()
+    case _: SystemMessage.Start => start()
     case _: SystemMessage.Stop  => stop()
   }
 
@@ -43,10 +43,6 @@ class CoordinatorAgent( val id              : SystemAgentId
 
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}
 
-  override def start(): Unit = {
-    log.debug("START")
-    super.start()
-  }
 }
 
 object CoordinatorAgent{

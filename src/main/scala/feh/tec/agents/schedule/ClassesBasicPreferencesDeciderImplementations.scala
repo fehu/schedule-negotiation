@@ -90,10 +90,10 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
             .map{
                   _len =>
                     val len = _len.value.left.get.asInstanceOf[Int]
-                    prev.get(whatDay_?).map{  day => repeatUntil(satisfiesConstraints(day.value.left.get.asInstanceOf[DayOfWeek], _: Time, len), get) }
-                    .getOrElse( repeatUntil(satisfiesConstraints(_: Time, len), get) )
+                    prev.get(whatDay_?).map{  day => fetchUntil(satisfiesConstraints(day.value.left.get.asInstanceOf[DayOfWeek], _: Time, len), get) }
+                    .getOrElse( fetchUntil(satisfiesConstraints(_: Time, len), get) )
                 }
-            .getOrElse( get ) // no satisfaction check
+            .getOrElse( get.head ) // no satisfaction check
         )
         catch {
           case ex: Throwable => Right(ex)
@@ -108,11 +108,11 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
   }
   
   // @tailrec
-  protected def repeatUntil[T](cond: T => Boolean, f: => T, maxTries: Int = 100): T = {
-    val res = f
+  protected def fetchUntil[T](cond: T => Boolean, it: Iterable[T], maxTries: Int = 100): T = {
+    val res = it.head
     if(cond(res)) res
     else if(maxTries == 0) sys.error("couldn't find a value satisfying the condition")
-    else repeatUntil(cond, f, maxTries - 1)
+    else fetchUntil(cond, it.tail, maxTries - 1)
   }
 }
 
