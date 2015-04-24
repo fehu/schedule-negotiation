@@ -16,11 +16,13 @@ trait CommonAgentDefs {
   type Time
 
   /** a negotiation that is easily accessed from others negotiations */
-  lazy val SharedNegotiation = new SharedNegotiation(varUpdatedNotification) { }
+  lazy val SharedNegotiation = new SharedNegotiation(varUpdatedNotification) {
+    defineVar(NegVars.NewNegAcceptance)
+  }
 
   add(SharedNegotiation)
   
-  override lazy val Reporting = new ReportingNegotiationsConfig //(messageReceived = true, messageSent = true)
+  override lazy val Reporting = new ReportingNegotiationsConfig(messageReceived = true, messageSent = true)
 
   protected def varUpdatedNotification(upd: VarUpdated[_ <: NegotiationVar]) = reportTo ! StateChanged(upd)
 
@@ -29,7 +31,10 @@ trait CommonAgentDefs {
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(withAg.id.name + " -- " + this.id.name)
 
   protected def mkNegotiationWith(withAg: NegotiatingAgentRef, disc: Discipline): Negotiation =
-    new Negotiation(negotiationWithId(withAg), varUpdatedNotification) with ANegotiation[Time] { def discipline = disc }
+    new Negotiation(negotiationWithId(withAg), varUpdatedNotification) with ANegotiation[Time] {
+      def discipline = disc
+      set(NegVars.Discipline)(disc)
+    }
 
 
   def negotiationProposition(vals: (Var[Any], Any)*) = new NegotiationProposition{
@@ -37,13 +42,13 @@ trait CommonAgentDefs {
     override val sender: NegotiatingAgentRef = implicitly
   }
   
-  def negotiationRejection(implicit snd: NegotiatingAgentRef) = new NegotiationRejection{
-    val values = Map.empty[Var[Any], Any]
+  def negotiationRejection(d: Discipline)(implicit snd: NegotiatingAgentRef) = new NegotiationRejection{
+    val values: Map[Var[Any], Any] = Map(Vars.Discipline -> d)
     override val sender = snd
   }
 
-  def negotiationAcceptance = new NegotiationAcceptance {
-    val values: Map[Var[Any], Any] = Map()
+  def negotiationAcceptance(d: Discipline) = new NegotiationAcceptance {
+    val values: Map[Var[Any], Any] = Map(Vars.Discipline -> d)
     override val sender: NegotiatingAgentRef = implicitly
   }
 

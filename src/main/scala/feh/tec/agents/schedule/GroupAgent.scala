@@ -40,7 +40,7 @@ class GroupAgent( val id          : NegotiatingAgentId
   }
 
 
-  def messageReceived: PartialFunction[Message, Unit] = handleNewNegotiations
+  def messageReceived: PartialFunction[Message, Unit] = handleNewNegotiations orElse handleMessage
 
   def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] =
     Await.result(
@@ -52,7 +52,6 @@ class GroupAgent( val id          : NegotiatingAgentId
 
   def start(): Unit = {
     startSearchingProfessors()
-    log.debug("GroupAgent start")
   }
 
   def stop(): Unit = ???
@@ -95,7 +94,7 @@ trait GroupAgentProposals{
 trait GroupAgentNegotiating{
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
 
-  def handleMessage = handleNegotiationStart orElse ???
+  def handleMessage = handleNegotiationStart // orElse handleNegotiation
 
   def nextProposalFor(neg: Negotiation): Proposals.Proposal
 
@@ -124,9 +123,13 @@ trait GroupAgentNegotiating{
       counterpart(neg) ! proposal
   }
 
+//  def handleNegotiation: PartialFunction[Message, Unit] = {
+//    case msg => sys.error("todo: handle " + msg)
+//  }
+
 }
 
-trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegotiations {
+trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegotiations with ActorLogging {
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
 
   def toAttend: GroupAgent.DisciplinesToAttend
@@ -157,12 +160,14 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
   def handleNewNegotiations: PartialFunction[Message, Unit] = {
     case msg: NegotiationProposition => sys.error("todo: recall")   // todo: recall
 
-    case (msg: NegotiationAcceptance) & AwaitingResponse() & WithDiscipline(d) =>
+    case (msg: NegotiationAcceptance) /*& AwaitingResponse()*/ /*& WithDiscipline(d)*/ =>
+      val d = getFromMsg(msg, Vars.Discipline)
       add _ $ mkNegotiationWith(msg.sender, d)
       modifyNewNegAcceptance(true, msg)
       checkResponsesFor(d, ProfessorAgent.Role.PartTime)(extraScopeTimeout)
 
-    case (msg: NegotiationRejection) & AwaitingResponse() & WithDiscipline(d) =>
+    case (msg: NegotiationRejection) /*& AwaitingResponse()*/ /*& WithDiscipline(d)*/ =>
+      val d = getFromMsg(msg, Vars.Discipline)
       modifyNewNegAcceptance(false, msg)
       checkResponsesFor(d, ProfessorAgent.Role.PartTime)(extraScopeTimeout)
   }
@@ -178,8 +183,11 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
       }
     else sys.error(s"no professor could be found for discipline $d")
 
-  private def checkResponsesFor(d: Discipline, counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) =
-    ifAllResponded _ $ d $ ifAnyAccepted(d, startNegotiatingOver(d), caseNobodyAccepted(counterpart, d))
+  private def checkResponsesFor(d: Discipline, counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) ={
+    val acc = SharedNegotiation(NegVars.NewNegAcceptance).toMap
+    ifAllResponded _ $ d $ ifAnyAccepted(d, acc, startNegotiatingOver(d), caseNobodyAccepted(counterpart, d))
+  }
+
 
   private def modifyNewNegAcceptance(b: Boolean, msg: NegotiationEstablishingMessage) = {
     val d = msg.get(Vars.Discipline)
@@ -196,6 +204,12 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
   }
 
 
-  private def ifAnyAccepted(d: Discipline, f: => Unit, fElse: => Unit) =
-    if(SharedNegotiation(NegVars.NewNegAcceptance)(d).exists(_._2.getOrElse(false))) f else fElse
+  private def ifAnyAccepted(d: Discipline,
+                            acceptance: Map[Discipline, Map[NegotiatingAgentId, Option[Boolean]]],
+                            f: => Unit,
+                            fElse: => Unit) =
+  {
+    if(acceptance(d).exists(_._2.getOrElse(false))) f else fElse
+  }
+
 }

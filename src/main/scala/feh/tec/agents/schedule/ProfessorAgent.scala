@@ -1,5 +1,6 @@
 package feh.tec.agents.schedule
 
+import akka.actor.ActorLogging
 import feh.tec.agents.comm.negotiations.Establishing.itHasValues
 import feh.tec.agents.comm.negotiations.Issues
 import feh.tec.agents.schedule.Messages._
@@ -31,7 +32,7 @@ class ProfessorAgent( val id: NegotiatingAgentId
   def assessedThreshold(neg: Negotiation): Float = ???
 
 
-  def start(): Unit = ???
+  def start(): Unit = {}
   def stop(): Unit = ???
 
 
@@ -68,7 +69,7 @@ trait ProfessorAgentNegotiatingWithGroup{
 
   protected def startSearchingForClassRoom(groupNeg: Negotiation)
 
-  def handleMessageFromGroups = handleNegotiationStart orElse ???
+  def handleMessageFromGroups = handleNegotiationStart orElse handleNegotiation
 
 
 
@@ -147,12 +148,12 @@ trait ProfessorAgentNegotiationPropositionsHandling
 
 //      if (propOrRecall == Vars.New)
 //      else recallRequested(msg)
-      msg.sender ! (if (canTeach(disc)) startNegotiationWith(msg.sender, disc) else negotiationRejection)
+      msg.sender ! (if (canTeach(disc)) startNegotiationWith(msg.sender, disc) else negotiationRejection(disc))
   }
 
   /** creates a negotiation and guards it */
   def startNegotiationWith(ag: NegotiatingAgentRef, disc: Discipline): NegotiationAcceptance = {
     add _ $ mkNegotiationWith(ag, disc)
-    negotiationAcceptance
+    negotiationAcceptance(disc)
   }
 }

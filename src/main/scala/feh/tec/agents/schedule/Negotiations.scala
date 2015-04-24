@@ -12,6 +12,8 @@ trait ANegotiation[Time] extends Negotiation
 {
   addNegVarDefaults(NegVars.Discipline -> None)
 
+  defineVar(NegVars.Discipline)
+
   forIssue(Vars.Day       , Nil)
   forIssue(Vars.Time[Time], Nil)
   forIssue(Vars.Length    , Nil)
