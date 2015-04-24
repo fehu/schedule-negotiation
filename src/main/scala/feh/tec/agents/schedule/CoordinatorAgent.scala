@@ -2,8 +2,10 @@ package feh.tec.agents.schedule
 
 import java.util.UUID
 
+import akka.actor.ActorLogging
+import feh.tec.agents.comm.ControllerMessage.Begin
 import feh.tec.agents.comm._
-import feh.tec.agents.comm.agent.SystemSupport
+import feh.tec.agents.comm.agent.{Reporting, SystemSupport}
 
 /*  TODO:  several ???  */
 class CoordinatorAgent( val id              : SystemAgentId
@@ -12,35 +14,39 @@ class CoordinatorAgent( val id              : SystemAgentId
                         )
   extends NegotiationController
   with NegotiationController.InitialAgents
-  with SystemSupport
+  with Reporting
+  with ActorLogging
 {
 
+  val Reporting = new ReportingConfig(messageSent = true, messageReceived = true)
+
   /** A SystemMessage was sent message by an agent with not a SystemAgentId */
-  protected def systemMessageFraud(fraud: SystemMessage): Unit = sys.error("fraud: " + fraud)
+  protected def systemMessageFraud(fraud: SystemMessage) = assert(fraud.sender.id.isInstanceOf[UserAgentId], "fraud: " + fraud)
 
   def initialNegotiatorsCreators = initNegCreators.join
 
   def nameForAgent(role: NegotiationRole, index: Int): String = role.role.filterNot(_.isWhitespace) + "-" + index
 
+  def systemMessageReceived: PartialFunction[SystemMessage, Unit] = {
+    case _: SystemMessage.Start => log.debug("START~!!!!!"); start()
+    case _: SystemMessage.Stop  => stop()
+  }
 
   def initializeNegotiator(ref: NegotiatingAgentRef): Unit = ref ! SystemMessage.Initialize(agentInit(ref.id.role): _*)(this.ref)
 
   def agentInit: NegotiationRole => Seq[SystemMessage] = ???
 
-//  def systemMessageReceived: PartialFunction[SystemMessage, Unit] = {
-//    case _: SystemMessage.Start => startNegotiation()
-//    case _: SystemMessage.Stop  => stop()
-//    case SystemMessage.Initialize(init) =>
-//  }
-
   def messageReceived: PartialFunction[Message, Unit] = {
     case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) => negotiatorsByRole(ProfessorAgent.Role.PartTime)
-    case CoordinatorAgent.Begin(_) => startNegotiation()
+    case _: Begin => startNegotiation()
   }
 
-  protected def onMessageReceived(msg: Message, unhandled: Boolean): Unit = {}
-  protected def onMessageSent(msg: Message, to: AgentRef): Unit = {}
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}
+
+  override def start(): Unit = {
+    log.debug("START")
+    super.start()
+  }
 }
 
 object CoordinatorAgent{
@@ -51,12 +57,6 @@ object CoordinatorAgent{
   {
     val tpe = "ExtraScopeRequest"
     val asString = s"for role $role"
-  }
-
-  case class Begin(uuid: UUID = UUID.randomUUID())
-                  (implicit val sender: AgentRef) extends Message{
-    val tpe = "Begin Negotiations"
-    val asString = ""
   }
 
   case class InitialNegotiatorsCreators( groups             : Seq[NegotiatingAgentCreator[GroupAgent]]

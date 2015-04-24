@@ -53,6 +53,13 @@ object GroupAgent{
   type DisciplinesToAttend = Map[Discipline, MinutesPerWeek]
 
   object Role extends NegotiationRole("Group")
+
+  def creator(reportTo: SystemAgentRef, toAttend: DisciplinesToAttend, timeouts: Timeouts) =
+    new NegotiatingAgentCreator(Role, scala.reflect.classTag[GroupAgent],
+      id => {
+        case Some(coordinator) => new GroupAgent(id, coordinator, reportTo, toAttend, timeouts)
+      }
+    )
 }
 
 /** Creating new proposals and evaluating already existing

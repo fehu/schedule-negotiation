@@ -2,7 +2,10 @@ package feh.tec.agents.schedule
 
 import akka.actor.{Props, ActorSystem}
 import feh.tec.agents.comm._
+import feh.tec.agents.schedule.CommonAgentDefs.Timeouts
 import feh.util.Path./
+import feh.util._
+import scala.concurrent.duration._
 
 object TestApp extends App{
 
@@ -40,19 +43,32 @@ object TestApp extends App{
 
   implicit def logFormat = ReportLogFormat.Pretty
 
+  lazy val timeouts = Timeouts(extraScopeTimeout = 100.millis)
+
   lazy val reportPrinter = ReportDistributedPrinter.creator("logger", "logs").create("logger")
 
-  def initNegCreators: CoordinatorAgent.InitialNegotiatorsCreators = ???
+  def initNegCreators = CoordinatorAgent.InitialNegotiatorsCreators(
+    groups = groups.toSeq.map{
+                               case (gId, disciplines) =>
+                                 val toAttend = disciplines.zipMap(_ => 3*60 /* todo: minutes per week */).toMap
+                                 GroupAgent.creator(reportPrinter, toAttend, timeouts)
+                             },
+    professorsFullTime = profsCanTeach.toSeq.map{
+                                            case (id, disciplines) =>
+                                              ProfessorAgent.creator(_.FullTime, reportPrinter, disciplines.toSet)
+                                       },
+    professorsPartTime = Nil // todo: part-time professors
+  )
 
   lazy val controller = CoordinatorAgent.creator(reportPrinter, initNegCreators).create("controller")
 
-  asys actorOf Props(
+    asys actorOf Props(
     new DeafUserAgent(UserAgentId("admin", UserAgentRole("admin")), None,
                       ag => {
                         import ag._
                         controller ! SystemMessage.Start()
                         Thread sleep 300
-                        controller ! CoordinatorAgent.Begin()
+                        controller ! ControllerMessage.Begin()
                       })
   )
 }

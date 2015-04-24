@@ -43,6 +43,14 @@ object ProfessorAgent{
     lazy val FullTime = new NegotiationRole("Professor: full-time") with Role
     lazy val PartTime = new NegotiationRole("Professor: part-time") with Role
   }
+
+  def creator( role: ProfessorAgent.Role.type => ProfessorAgent.Role
+             , reportTo: SystemAgentRef
+             , canTeach: Set[Discipline]
+             ) =
+    new NegotiatingAgentCreator(role(Role), scala.reflect.classTag[ProfessorAgent],
+      id => _ => new ProfessorAgent(id, reportTo, canTeach)
+    )
 }
 
 trait ProfessorAgentNegotiatingForClassRoom{
