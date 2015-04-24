@@ -12,3 +12,4 @@ lazy val root = (project in file(".")) dependsOn comm
 
 lazy val comm = RootProject(file( "../../negotiation" ))
 
+libraryDependencies += "org.apache.poi" % "poi" % "3.11"
