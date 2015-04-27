@@ -33,7 +33,9 @@ trait CommonAgentDefs {
   protected def mkNegotiationWith(withAg: NegotiatingAgentRef, disc: Discipline): Negotiation =
     new Negotiation(negotiationWithId(withAg), varUpdatedNotification) with ANegotiation[Time] {
       def discipline = disc
+
       set(NegVars.Discipline)(disc)
+      set(OneToOneNegotiation.NegotiatingWith)(withAg)
     }
 
 
@@ -52,10 +54,14 @@ trait CommonAgentDefs {
     override val sender: NegotiatingAgentRef = implicitly
   }
 
+  object Tst{
+    def unapply(msg: Message): Option[Boolean] = Some(true)
+  }
+
   object WithDiscipline{
-    def unapply(msg: Message): Option[Discipline] = PartialFunction.condOpt(msg){
+    def unapply(msg: Message): Option[Discipline] = msg match {
       case msg: NegotiationEstablishingMessage =>
-        implicitly[HasValues[NegotiationEstablishingMessage]].value(msg)(Vars.Discipline)
+        implicitly[HasValues[NegotiationEstablishingMessage]].valueOpt(msg)(Vars.Discipline)
     }
   }
 

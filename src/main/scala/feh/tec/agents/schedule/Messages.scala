@@ -83,4 +83,13 @@ object Messages {
     val tpe = "No Counterpart Found"
     val asString = d.toString
   }
+  
+  case class StartingNegotiation(discipline: Discipline, counterpart: NegotiatingAgentRef)
+                                (implicit val sender: AgentRef)
+    extends Report
+  {
+    def isSevere = false
+    val tpe = "Starting Negotiation"
+    val asString = s"over $discipline with $counterpart"
+  }
 }
