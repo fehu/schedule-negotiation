@@ -23,14 +23,24 @@ class ProfessorAgent( val id: NegotiatingAgentId
   with ProfessorAgentNegotiatingWithGroup
   with ProfessorAgentNegotiatingForClassRoom
   with ActorLogging
+  with AgentsTime
 {
-  type Time
 
   def messageReceived: PartialFunction[Message, Unit] = handleNegotiationPropositions orElse handleMessageFromGroups
 
-  def classesAssessor: ClassesBasicPreferencesAssessor[Time] = ???
+  def classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
+    new ClassesBasicPreferencesAssessor[Time]{
+      def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
+        val endTime = tDescr.fromMinutes(tDescr.toMinutes(at) + length)
+        if(tDescr.ending > endTime && timetable.busyAt(onDay, at, endTime)) InUnitInterval(1)
+        else InUnitInterval(0)
+      }
 
-  def assessedThreshold(neg: Negotiation): Float = ???
+
+      def basedOn(p: Param[_]*): DecideInterface = ???
+    }
+
+  def assessedThreshold(neg: Negotiation): Float = 0.7f // todo
 
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(this.id.name + " -- " + withAg.id.name)
 
@@ -101,7 +111,7 @@ trait ProfessorAgentNegotiatingWithGroup{
   def handleNegotiation: PartialFunction[Message, Unit] = {
     case prop: ClassesProposal[_] =>
       val neg = negotiation(prop.negotiation)
-      val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, Some(prop.time.asInstanceOf[Time]))
+      val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time.asInstanceOf[Time])
 
       val resp = if(a > assessedThreshold(neg)) {
                                                   neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)

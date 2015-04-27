@@ -2,7 +2,9 @@ package feh.tec.agents.schedule
 
 import feh.util.RandomWrappers._
 
-class Time protected (val discrete: Int)
+class Time protected (val discrete: Int) extends Ordered[Time]{
+  def compare(that: Time): Int = this.discrete compare that.discrete
+}
 
 object Time{
   def apply(i: Int): Time = new Time(i.ensuring(_ > 0))
@@ -19,7 +21,7 @@ object Time{
 
     lazy val domain: Stream[Time] = Stream.from(0).map(Time.apply).take(n)
     
-    def fromMinutes(t: Int): Time = Time(divEnsuringIntegerResult(t - mBegin, mStep).ensuring(_ < n))
+    def fromMinutes(t: Int): Time = Time(divEnsuringIntegerResult(t - mBegin, mStep)) //.ensuring(_ < n))
     def toMinutes(t: Time): Int = t.discrete*mStep + mBegin
 
     def randomly: Stream[Time] = Stream((0 until n).randomOrder(): _*).map(Time.apply)
@@ -44,7 +46,7 @@ class MutableTimetable(implicit timeDescr: Time.Descriptor)
   with TimetableAccess[Time]
 {
   protected val timeTable: Map[DayOfWeek, Array[Option[ClassId]]] = DaysOfWeek.values.toSeq.map{
-    day => day -> Array.ofDim[Option[ClassId]](timeDescr.n)
+    day => day -> Array.fill[Option[ClassId]](timeDescr.n)(None)
   }.toSeq.toMap
 
 

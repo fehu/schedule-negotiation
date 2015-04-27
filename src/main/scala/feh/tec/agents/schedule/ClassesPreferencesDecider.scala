@@ -81,9 +81,9 @@ trait ClassesBasicPreferencesDecider[Time] extends AbstractDecider{
 
 trait ClassesBasicPreferencesAssessor[Time] extends AbstractDecider{
   def assess( discipline: Discipline
-            , length    : Int           = -1
-            , onDay     : DayOfWeek     = null
-            , at        : Option[Time]  = None      ): InUnitInterval
+            , length    : Int
+            , onDay     : DayOfWeek
+            , at        : Time      ): InUnitInterval
 }
 
 

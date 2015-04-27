@@ -78,3 +78,13 @@ object CommonAgentDefs{
   def discipline(neg: Negotiation)     = disciplineOpt(neg).get
 
 }
+
+trait AgentsTime{
+  agent: NegotiatingAgent =>
+
+  type Time = feh.tec.agents.schedule.Time
+
+  implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
+
+  val timetable = new MutableTimetable
+}

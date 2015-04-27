@@ -27,13 +27,8 @@ class GroupAgent( val id          : NegotiatingAgentId
   with GroupAgentNegotiating
   with GroupAgentProposals
   with ActorLogging
+  with AgentsTime
 {
-  type Time = feh.tec.agents.schedule.Time
-
-  implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
-
-  val timetable = new MutableTimetable
-
   val classesDecider = new ClassesBasicPreferencesDeciderImplementations[Time]{
     def basedOn(p: Param[_]*): AbstractDecideInterface =
       new DecideRandom(p, lengthDiscr = 90, toAttend(getParam(disciplineParam, p).value), timetable, log)
