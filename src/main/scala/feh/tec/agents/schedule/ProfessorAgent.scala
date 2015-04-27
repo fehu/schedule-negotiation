@@ -22,6 +22,7 @@ class ProfessorAgent( val id: NegotiatingAgentId
   with ProfessorAgentNegotiationPropositionsHandling
   with ProfessorAgentNegotiatingWithGroup
   with ProfessorAgentNegotiatingForClassRoom
+  with ActorLogging
 {
   type Time
 
@@ -31,6 +32,7 @@ class ProfessorAgent( val id: NegotiatingAgentId
 
   def assessedThreshold(neg: Negotiation): Float = ???
 
+  protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(this.id.name + " -- " + withAg.id.name)
 
   def start(): Unit = {}
   def stop(): Unit = ???
@@ -61,7 +63,7 @@ trait ProfessorAgentNegotiatingForClassRoom{
 }
 
 trait ProfessorAgentNegotiatingWithGroup{
-  agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
+  agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs with ActorLogging =>
 
   def assessedThreshold(neg: Negotiation): Float
 
@@ -75,9 +77,11 @@ trait ProfessorAgentNegotiatingWithGroup{
 
   // Starting
 
-  protected val counterpartsFoundByTheCounterpart = mutable.Map(negotiations.keys.toSeq.zipMap(_ => Option.empty[Int]): _*)
+  def negotiationsExceptShared = negotiations - SharedNegotiation.id
 
-  protected def negotiationsByDiscipline = negotiations.values.groupBy(_(NegVars.Discipline))
+  protected val counterpartsFoundByTheCounterpart = mutable.Map(negotiationsExceptShared.keys.toSeq.zipMap(_ => Option.empty[Int]): _*)
+
+  protected def negotiationsByDiscipline = negotiationsExceptShared.values.groupBy(_(NegVars.Discipline))
 
   def disciplinePriority(nGroups: Int, nProfs: Int): Float = nGroups.toFloat / nProfs
 
@@ -113,8 +117,9 @@ trait ProfessorAgentNegotiatingWithGroup{
   private def respondWithDisciplinePriorities() = negotiationsByDiscipline foreach {
     case (discipline, negotiations) =>
       val negIds = negotiations.map(_.id).toSeq
-      val nProfs = counterpartsFoundByTheCounterpart.withFilter(negIds.contains).map(_._2.get).toSeq
-        .ensuring(_.distinct == 1).head
+      val counterpartsCounts = counterpartsFoundByTheCounterpart.withFilter(negIds contains _._1).map(_._2.get).toSeq
+      assert(counterpartsCounts.distinct.size == 1, "received different counterparts counts: " + counterpartsCounts)
+      val nProfs = counterpartsCounts.head
       val p = disciplinePriority(negotiations.size, nProfs)
 
       negotiations foreach {

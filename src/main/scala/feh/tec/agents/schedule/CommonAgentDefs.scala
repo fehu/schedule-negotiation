@@ -28,7 +28,7 @@ trait CommonAgentDefs {
 
 
 
-  protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(withAg.id.name + " -- " + this.id.name)
+  protected def negotiationWithId(withAg: NegotiatingAgentRef): NegotiationId
 
   protected def mkNegotiationWith(withAg: NegotiatingAgentRef, disc: Discipline): Negotiation =
     new Negotiation(negotiationWithId(withAg), varUpdatedNotification) with ANegotiation[Time] {

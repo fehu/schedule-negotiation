@@ -12,7 +12,7 @@ object Messages {
                               , uuid        : UUID              = UUID.randomUUID()  )
                               (implicit val sender: NegotiatingAgentRef) extends NegotiationMessage{
     val tpe = "CounterpartsFound"
-    val asString = s"I've found $count counterparts"
+    val asString = s"I've found $count counterpart(s)"
   }
 
   case class DisciplinePriorityEstablished( negotiation : NegotiationId

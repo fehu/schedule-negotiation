@@ -1,5 +1,6 @@
 package feh.tec.agents.schedule
 
+import akka.event.LoggingAdapter
 import feh.tec.agents.schedule.AbstractDecider.DecideInterfaceDecideImpl
 import feh.util._
 
@@ -7,7 +8,7 @@ import scala.annotation.tailrec
 
 //import feh.tec.agents.schedule.ClassesBasicPreferencesDeciderImpl.DeciderPreferences
 
-abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescriptor] //(val preferences: DeciderPreferences[Time])
+abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescriptor]   //(val preferences: DeciderPreferences[Time])
   extends ClassesBasicPreferencesDecider[Time]
   with DecideInterfaceDecideImpl
 {
@@ -36,7 +37,7 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
 
     def possibleLengths(totalLength: Int) = {
       assert(totalLength % lengthDiscr == 0, s"discipline minutes $totalLength cannot be divided by $lengthDiscr with integer result")
-      val n = lengthDiscr / totalLength
+      val n = totalLength / lengthDiscr
       for(i <- 1 to n) yield i*lengthDiscr
     }
 
@@ -70,7 +71,8 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
   class DecideRandom(params: Seq[AbstractDecider#Param[_]],
                      val lengthDiscr: Int,
                      val disciplineTotalLength: Int,
-                     val timetable: TimeTableRead[Time]
+                     val timetable: TimeTableRead[Time],
+                     log: LoggingAdapter  // todo
                       )
     extends AbstractDecideInterface(params)
     with DecideLength
@@ -79,7 +81,7 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
 //    protected lazy val discipline = params.find(_.productPrefix == disciplineParam) getOrThrow "No discipline found in the parameters"
 
     protected def decideDay(prev: Map[DecisionDescriptor[Any], Decision[Any]]): Decision[DayOfWeek] =
-      Decision(Left( (DaysOfWeek.values - DaysOfWeek.Sun).randomChoose ))
+      Decision(Left( (DaysOfWeek.values - DaysOfWeek.Sun).randomChoose.get ))
 
     protected def decideTime(prev: Map[DecisionDescriptor[Any], Decision[Any]]): Decision[Time] ={
       def get = tdescr.randomly
@@ -103,7 +105,7 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
       
 
     protected def decideLength(prev: Map[DecisionDescriptor[Any], Decision[Any]]): Decision[Int] =
-      Decision( Left( possibleLengths(disciplineTotalLength).randomChoice ) )
+      Decision( Left( possibleLengths(disciplineTotalLength).randomChoice.get ) )
 
   }
   

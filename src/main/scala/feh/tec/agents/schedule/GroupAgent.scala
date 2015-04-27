@@ -36,7 +36,7 @@ class GroupAgent( val id          : NegotiatingAgentId
 
   val classesDecider = new ClassesBasicPreferencesDeciderImplementations[Time]{
     def basedOn(p: Param[_]*): AbstractDecideInterface =
-      new DecideRandom(p, lengthDiscr = 90, toAttend(getParam(disciplineParam, p).value), timetable)
+      new DecideRandom(p, lengthDiscr = 90, toAttend(getParam(disciplineParam, p).value), timetable, log)
   }
 
 
@@ -49,6 +49,8 @@ class GroupAgent( val id          : NegotiatingAgentId
     )
 
   def extraScopeTimeout = timeouts.extraScopeTimeout
+
+  protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(withAg.id.name + " -- " + this.id.name)
 
   def start(): Unit = {
     startSearchingProfessors()
