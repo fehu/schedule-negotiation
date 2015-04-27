@@ -2,7 +2,7 @@ package feh.tec.agents.schedule
 
 import java.util.UUID
 
-import akka.actor.ActorLogging
+import akka.actor.{SupervisorStrategy, ActorLogging}
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{Reporting, SystemSupport}
 
@@ -42,11 +42,14 @@ class CoordinatorAgent( val id              : SystemAgentId
   }
 
   def messageReceived: PartialFunction[Message, Unit] = {
-    case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) => negotiatorsByRole(ProfessorAgent.Role.PartTime)
+    case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) =>
+      sender() ! negotiatorsByRole.getOrElse(ProfessorAgent.Role.PartTime, Nil).toSet
+    case _: Messages.NoCounterpartFound => // todo
   }
 
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}
 
+  override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
 }
 
 object CoordinatorAgent{

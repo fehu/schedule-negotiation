@@ -3,7 +3,7 @@ package feh.tec.agents.schedule
 import java.util.UUID
 
 import feh.tec.agents.comm.negotiations.{Var, Proposals}
-import feh.tec.agents.comm.{NegotiationId, NegotiationMessage, NegotiatingAgentRef}
+import feh.tec.agents.comm._
 
 object Messages {
   /** Used to calculate discipline priority */
@@ -78,4 +78,9 @@ object Messages {
                             )
   }
 
+  case class NoCounterpartFound(d: Discipline)(implicit val sender: AgentRef) extends Report{
+    def isSevere = true
+    val tpe = "No Counterpart Found"
+    val asString = d.toString
+  }
 }

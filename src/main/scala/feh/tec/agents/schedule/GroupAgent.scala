@@ -98,7 +98,7 @@ trait GroupAgentNegotiating{
 
   def nextProposalFor(neg: Negotiation): Proposals.Proposal
 
-  def negotiationsOver(d: Discipline) = negotiations.filter(_._2(NegVars.Discipline) == d)
+  def negotiationsOver(d: Discipline) = negotiations.filter(_._2.get(NegVars.Discipline) contains d)
 
   def startNegotiatingOver(d: Discipline): Unit = {
     val counterparts = negotiatingWithOver(d)
@@ -174,14 +174,22 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
 
   protected def caseNobodyAccepted(counterpart: NegotiationRole, d: Discipline)(implicit extraScopeTimeout: Timeout) =
     if (!askedForExtraScope)
-      askForExtraScope(counterpart) |> searchProfessors |> {
-        accMap =>
-          askedForExtraScope = true
-          SharedNegotiation.transform(NegVars.NewNegAcceptance)(_.map {
-            case (k, v) => k -> (v ++ accMap.getOrElse(k, Map()))
-          })
+      askForExtraScope(counterpart) match {
+        case set if set.isEmpty => noCounterpartFound(d)
+        case set => searchProfessors(set) |> {
+          accMap =>
+            askedForExtraScope = true
+            SharedNegotiation.transform(NegVars.NewNegAcceptance)(_.map {
+              case (k, v) => k -> (v ++ accMap.getOrElse(k, Map()))
+            })
+        }
       }
-    else sys.error(s"no professor could be found for discipline $d")
+    else noCounterpartFound(d)
+
+  private def noCounterpartFound(d: Discipline) = {
+    reportTo ! Messages.NoCounterpartFound(d)
+    sys.error(s"no professor could be found for discipline $d")
+  }
 
   private def checkResponsesFor(d: Discipline, counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) ={
     val acc = SharedNegotiation(NegVars.NewNegAcceptance).toMap

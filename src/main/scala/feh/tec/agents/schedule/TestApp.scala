@@ -47,7 +47,7 @@ object TestApp extends App{
 
   implicit def logFormat = ReportLogFormat.Pretty
 
-  lazy val timeouts = Timeouts(extraScopeTimeout = 100.millis)
+  lazy val timeouts = Timeouts(extraScopeTimeout = 2.seconds)
 
   lazy val reportPrinter = ReportDistributedPrinter.creator("logger", "logs").create("logger")
 
