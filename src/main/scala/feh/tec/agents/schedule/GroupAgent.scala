@@ -161,14 +161,12 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
   def handleNewNegotiations: PartialFunction[Message, Unit] = {
     case msg: NegotiationProposition => sys.error("todo: recall")   // todo: recall
 
-    case (msg: NegotiationAcceptance) /*& AwaitingResponse()*/ /*& Tst(true)*/ =>
-      val d = getFromMsg(msg, Vars.Discipline)
+    case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(d) =>
       add _ $ mkNegotiationWith(msg.sender, d)
       modifyNewNegAcceptance(true, msg)
       checkResponsesFor(d, ProfessorAgent.Role.PartTime)(extraScopeTimeout)
 
-    case (msg: NegotiationRejection) /*& AwaitingResponse()*/ /*& Tst(true)*/ =>
-      val d = getFromMsg(msg, Vars.Discipline)
+    case (msg: NegotiationRejection) /*& AwaitingResponse()*/ & WithDiscipline(d) =>
       modifyNewNegAcceptance(false, msg)
       checkResponsesFor(d, ProfessorAgent.Role.PartTime)(extraScopeTimeout)
   }
