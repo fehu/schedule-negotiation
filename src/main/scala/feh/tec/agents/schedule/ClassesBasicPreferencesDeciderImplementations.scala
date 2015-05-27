@@ -81,7 +81,7 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
 //    protected lazy val discipline = params.find(_.productPrefix == disciplineParam) getOrThrow "No discipline found in the parameters"
 
     protected def decideDay(prev: Map[DecisionDescriptor[Any], Decision[Any]]): Decision[DayOfWeek] =
-      Decision(Left( (DaysOfWeek.values - DaysOfWeek.Sun).randomChoose.get ))
+      Decision(Left( (DaysOfWeek.values - DaysOfWeek.Sun).randomChoice.get ))
 
     protected def decideTime(prev: Map[DecisionDescriptor[Any], Decision[Any]]): Decision[Time] ={
       def get = tdescr.randomly

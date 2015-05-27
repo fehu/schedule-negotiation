@@ -37,11 +37,15 @@ class GroupAgent( val id          : NegotiatingAgentId
 
   def messageReceived: PartialFunction[Message, Unit] = handleNewNegotiations orElse handleMessage
 
-  def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] =
-    Await.result(
+  def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] = {
+    log.debug("askForExtraScope")
+    val res = Await.result(
       (coordinator ? CoordinatorAgent.ExtraScopeRequest(role)).mapTo[Set[NegotiatingAgentRef]],
       timeout.duration*1.1
     )
+    log.debug("extra scope: " + res)
+    res
+  }
 
   def extraScopeTimeout = timeouts.extraScopeTimeout
 

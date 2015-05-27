@@ -105,6 +105,7 @@ trait ProfessorAgentNegotiatingWithGroup{
   // Main
   
   protected def counterProposalOrRejection(prop: ClassesProposal[_], neg: Negotiation): ClassesProposalMessage = {
+    log.debug(s"counterProposalOrRejection for $prop in $neg")
     ???
   }
 
@@ -128,6 +129,7 @@ trait ProfessorAgentNegotiatingWithGroup{
     case (discipline, negotiations) =>
       val negIds = negotiations.map(_.id).toSeq
       val counterpartsCounts = counterpartsFoundByTheCounterpart.withFilter(negIds contains _._1).map(_._2.get).toSeq
+      log.debug("Professor: counterpartsCounts = " + counterpartsCounts)
       assert(counterpartsCounts.distinct.size == 1, "received different counterparts counts: " + counterpartsCounts)
       val nProfs = counterpartsCounts.head
       val p = disciplinePriority(negotiations.size, nProfs)
