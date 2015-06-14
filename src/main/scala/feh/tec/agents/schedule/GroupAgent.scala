@@ -88,7 +88,7 @@ trait GroupAgentProposals{
 
     val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
 
-    ClassesProposal(neg.id, day.value.left.get, time.value.left.get, len.value.left.get) // todo .value.left.get
+    ClassesProposal(neg.id, getDecision(day), getDecision(time), getDecision(len))
   }
 }
 

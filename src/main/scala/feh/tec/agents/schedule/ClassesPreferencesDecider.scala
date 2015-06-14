@@ -79,7 +79,7 @@ trait ClassesBasicPreferencesDecider[Time] extends AbstractDecider{
 
 }
 
-trait ClassesBasicPreferencesAssessor[Time] extends AbstractDecider{
+trait ClassesBasicPreferencesAssessor[Time] extends ClassesBasicPreferencesDecider[Time]{
   def assess( discipline: Discipline
             , length    : Int
             , onDay     : DayOfWeek

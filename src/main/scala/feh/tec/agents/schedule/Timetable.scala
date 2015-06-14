@@ -7,7 +7,7 @@ class Time protected (val discrete: Int) extends Ordered[Time]{
 }
 
 object Time{
-  def apply(i: Int): Time = new Time(i.ensuring(_ > 0))
+  def apply(i: Int): Time = new Time(i.ensuring(_ >= 0))
 
   trait Descriptor extends TimeDescriptor[Time]{
     def n: Int

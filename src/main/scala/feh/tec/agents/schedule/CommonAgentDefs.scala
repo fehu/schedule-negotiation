@@ -65,6 +65,7 @@ trait CommonAgentDefs {
     }
   }
 
+  def getDecision[T](d: AbstractDecider#Decision[T]): T = d.value.right.map(throw _).merge
 }
 
 object CommonAgentDefs{

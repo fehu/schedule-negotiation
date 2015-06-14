@@ -28,8 +28,8 @@ class ProfessorAgent( val id: NegotiatingAgentId
 
   def messageReceived: PartialFunction[Message, Unit] = handleNegotiationPropositions orElse handleMessageFromGroups
 
-  def classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
-    new ClassesBasicPreferencesAssessor[Time]{
+  lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
+    new ClassesBasicPreferencesDeciderImplementations[Time] with ClassesBasicPreferencesAssessor[Time]{
       def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
         val endTime = tDescr.fromMinutes(tDescr.toMinutes(at) + length)
         if(tDescr.ending > endTime && timetable.busyAt(onDay, at, endTime)) InUnitInterval(1)
@@ -37,7 +37,8 @@ class ProfessorAgent( val id: NegotiatingAgentId
       }
 
 
-      def basedOn(p: Param[_]*): DecideInterface = ???
+      def basedOn(p: Param[_]*): AbstractDecideInterface =
+        new DecideRandom(p, lengthDiscr = 90, getParam(lengthParam, p).value, timetable, log)
     }
 
   def assessedThreshold(neg: Negotiation): Float = 0.7f // todo
@@ -77,7 +78,7 @@ trait ProfessorAgentNegotiatingWithGroup{
 
   def assessedThreshold(neg: Negotiation): Float
 
-  def classesAssessor: ClassesBasicPreferencesAssessor[Time]
+  val classesAssessor: ClassesBasicPreferencesAssessor[Time]
 
   protected def startSearchingForClassRoom(groupNeg: Negotiation)
 
@@ -106,7 +107,10 @@ trait ProfessorAgentNegotiatingWithGroup{
   
   protected def counterProposalOrRejection(prop: ClassesProposal[_], neg: Negotiation): ClassesProposalMessage = {
     log.debug(s"counterProposalOrRejection for $prop in $neg")
-    ???
+    import classesAssessor._
+    val d = classesAssessor.basedOn(lengthParam -> prop.length)
+    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
+    ClassesCounterProposal(neg.id, prop.uuid, getDecision(day), getDecision(time), getDecision(len))
   }
 
   def handleNegotiation: PartialFunction[Message, Unit] = {
@@ -128,22 +132,27 @@ trait ProfessorAgentNegotiatingWithGroup{
   private def respondWithDisciplinePriorities() = negotiationsByDiscipline foreach {
     case (discipline, negotiations) =>
       val negIds = negotiations.map(_.id).toSeq
+      log.debug("Professor: counterpartsFoundByTheCounterpart = " + counterpartsFoundByTheCounterpart)
+      log.debug("Professor: negIds = " + negIds)
       val counterpartsCounts = counterpartsFoundByTheCounterpart.withFilter(negIds contains _._1).map(_._2.get).toSeq
       log.debug("Professor: counterpartsCounts = " + counterpartsCounts)
-      assert(counterpartsCounts.distinct.size == 1, "received different counterparts counts: " + counterpartsCounts)
-      val nProfs = counterpartsCounts.head
-      val p = disciplinePriority(negotiations.size, nProfs)
+      assert(counterpartsCounts.distinct.size <= 1, "received different counterparts counts: " + counterpartsCounts)
+      counterpartsCounts.headOption foreach{
+        nProfs =>
+          val p = disciplinePriority(negotiations.size, nProfs)
 
-      negotiations foreach {
-        neg =>
-          neg.set(NegVars.DisciplinePriority)(p)
-          counterpart(neg) ! DisciplinePriorityEstablished(neg.id, p)
-          neg.set(NegotiationVar.State)(NegotiationState.Negotiating)
+          negotiations foreach {
+            neg =>
+              neg.set(NegVars.DisciplinePriority)(p)
+              counterpart(neg) ! DisciplinePriorityEstablished(neg.id, p)
+              neg.set(NegotiationVar.State)(NegotiationState.Negotiating)
+          }
       }
 
   }
 
-  private def ifAllCounterpartsFoundReceived(f: => Unit) = if (counterpartsFoundByTheCounterpart.values forall (_.isDefined)) f
+  private def ifAllCounterpartsFoundReceived(f: => Unit) =
+    if (counterpartsFoundByTheCounterpart.values |> (vs => vs.nonEmpty && vs.forall(_.isDefined))) f
 }
 
 trait ProfessorAgentNegotiationPropositionsHandling
