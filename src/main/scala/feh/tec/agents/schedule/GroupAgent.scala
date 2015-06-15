@@ -5,9 +5,10 @@ import akka.util.Timeout
 import feh.tec.agents.comm.NegotiationVar.Scope
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{NegotiationReactionBuilder, Negotiating}
+import feh.tec.agents.comm.negotiations.Proposals.Vars.CurrentProposal
 import feh.tec.agents.comm.negotiations._
 import Establishing._
-import feh.tec.agents.schedule.Messages.{StartingNegotiation, ClassesProposal, CounterpartsFound}
+import feh.tec.agents.schedule.Messages._
 import scala.collection.mutable
 import feh.util._
 import CommonAgentDefs._
@@ -55,7 +56,9 @@ class GroupAgent( val id          : NegotiatingAgentId
     startSearchingProfessors()
   }
 
-  def stop(): Unit = ???
+  def stop(): Unit = {
+    reportTimetable()
+  }
 }
 
 object GroupAgent{
@@ -95,7 +98,7 @@ trait GroupAgentProposals{
 trait GroupAgentNegotiating{
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs with ActorLogging =>
 
-  def handleMessage = handleNegotiationStart // orElse handleNegotiation
+  def handleMessage = handleNegotiationStart orElse handleNegotiation
 
   def nextProposalFor(neg: Negotiation): Proposals.Proposal
 
@@ -123,11 +126,24 @@ trait GroupAgentNegotiating{
       neg.set(NegotiationVar.State)(NegotiationState.Negotiating)
       val proposal = nextProposalFor(neg)
       counterpart(neg) ! proposal
+      neg.set(CurrentProposal)(proposal)
+      awaitResponseFor(proposal)
   }
 
-//  def handleNegotiation: PartialFunction[Message, Unit] = {
-//    case msg => sys.error("todo: handle " + msg)
-//  }
+  def handleNegotiation: PartialFunction[Message, Unit] = {
+    case (msg: ClassesAcceptance[_]) suchThat AwaitingResponse() =>
+      /*todo: use Confirm message*/
+      log.debug("Acceptance")
+      val neg = negotiation(msg.negotiation)
+      val prop = neg(CurrentProposal).ensuring(_.uuid == msg.respondingTo)
+      def get[T] = getFromMsg(prop.asInstanceOf[ClassesProposalMessage], _: Var[T])
+      val start = get(Vars.Time[Time])
+      val end = tDescr.fromMinutes(tDescr.toMinutes(start) + get(Vars.Length))
+      val clazz = ClassId(neg(NegVars.Discipline).code)
+      timetable.putClass(get(Vars.Day), start, end, clazz)
+      noResponsesExpected(msg.negotiation)
+    case msg => //sys.error("todo: handle " + msg)
+  }
 
 }
 

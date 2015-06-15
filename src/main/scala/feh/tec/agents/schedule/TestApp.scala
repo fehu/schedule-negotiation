@@ -74,6 +74,13 @@ object TestApp extends App{
                         controller ! SystemMessage.Initialize()
                         Thread sleep 300
                         controller ! ControllerMessage.Begin()
+
+                        val cntrl = ActorRefExtractor(controller).actorRef
+                        asys.scheduler.scheduleOnce(20 seconds span, cntrl, SystemMessage.Stop())(asys.dispatcher)
                       })
   )
+
+  Thread.sleep(30*1000)
+  asys.awaitTermination(10.seconds)
+  sys.exit()
 }

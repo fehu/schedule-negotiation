@@ -20,7 +20,7 @@ class CoordinatorAgent( val id              : SystemAgentId
   val Reporting = new ReportingConfig(messageSent = true, messageReceived = true)
 
   /** A SystemMessage was sent message by an agent with not a SystemAgentId */
-  protected def systemMessageFraud(fraud: SystemMessage) = assert(fraud.sender.id.isInstanceOf[UserAgentId], "fraud: " + fraud)
+//  protected def systemMessageFraud(fraud: SystemMessage) = assert(fraud.sender.id.isInstanceOf[UserAgentId], "fraud: " + fraud)
 
   def initialNegotiatorsCreators = initNegCreators.join
 

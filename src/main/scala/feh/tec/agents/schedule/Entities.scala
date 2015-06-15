@@ -39,8 +39,9 @@ trait TimeDescriptor[Time]{
   def randomly: Stream[Time]
 
   def toMinutes(t: Time): Int
-  def fromMinutes(t: Int): Time
-  
+  def fromMinutesOpt(t: Int): Option[Time]
+  def fromMinutes(t: Int): Time = fromMinutesOpt(t).getOrElse(sys.error(s"$t is out of range"))
+
   def beginning: Time
   def ending: Time
 

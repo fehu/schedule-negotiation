@@ -2,8 +2,10 @@ package feh.tec.agents.schedule
 
 import java.util.UUID
 
+import feh.tec.agents.comm.Message.HasValues
 import feh.tec.agents.comm.negotiations.{Var, Proposals}
 import feh.tec.agents.comm._
+import feh.util.PrintIndents
 
 object Messages {
   /** Used to calculate discipline priority */
@@ -25,9 +27,16 @@ object Messages {
 
 
 
-  trait ClassesProposalMessage {
+  trait ClassesProposalMessage extends Message{
     self: Proposals.ProposalMessage =>
+
+    val myValues: Map[Var[Any], Any]
   }
+
+  implicit def classesProposalHasValues = new HasValues[ClassesProposalMessage] {
+    def values = _.myValues
+  }
+
 
   case class ClassesProposal[Time]( negotiation: NegotiationId
                                   , day: DayOfWeek
@@ -91,5 +100,33 @@ object Messages {
     def isSevere = false
     val tpe = "Starting Negotiation"
     val asString = s"over $discipline with $counterpart"
+  }
+
+  case class TimetableReport(tt: ImmutableTimetable[Option[ClassId]])(implicit val sender: AgentRef)
+    extends Report with PrintIndents
+  {
+    def isSevere = false
+    val tpe = "Timetable Report"
+    val asString = {
+      implicit val p = newBuilder(4)
+      printlni("="*20)
+
+      nextDepth{
+                 tt.asMap.mapValues(_.filter(_._2.isDefined).mapValues(_.get))
+                 .foreach{
+                           case (day, classes) =>
+                             printlni(day + ":")
+                             nextDepth{
+                                        classes foreach{
+                                          case (time, clazz) => printlni(s"$time --- $clazz")
+                                        }
+                                      }
+                         }
+
+               }
+      printlni("="*20)
+
+      p.mkString
+    }
   }
 }

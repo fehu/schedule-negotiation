@@ -8,9 +8,10 @@ import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationEstablishingMessage, NegotiationProposition, NegotiationAcceptance, NegotiationRejection}
 import feh.tec.agents.comm.negotiations.Var
+import feh.tec.agents.schedule.Messages.TimetableReport
 import feh.tec.agents.util.OneToOneNegotiation
 
-trait CommonAgentDefs {
+trait CommonAgentDefs extends AgentsTime{
   agent: NegotiatingAgent with DynamicNegotiations =>
 
   type Time
@@ -66,6 +67,8 @@ trait CommonAgentDefs {
   }
 
   def getDecision[T](d: AbstractDecider#Decision[T]): T = d.value.right.map(throw _).merge
+
+  def reportTimetable() = reportTo ! TimetableReport(ImmutableTimetable(timetable.asMap))
 }
 
 object CommonAgentDefs{

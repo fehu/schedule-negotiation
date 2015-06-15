@@ -31,9 +31,12 @@ class ProfessorAgent( val id: NegotiatingAgentId
   lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
     new ClassesBasicPreferencesDeciderImplementations[Time] with ClassesBasicPreferencesAssessor[Time]{
       def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
-        val endTime = tDescr.fromMinutes(tDescr.toMinutes(at) + length)
-        if(tDescr.ending > endTime && timetable.busyAt(onDay, at, endTime)) InUnitInterval(1)
-        else InUnitInterval(0)
+        tDescr.fromMinutesOpt(tDescr.toMinutes(at) + length).map{
+          endTime =>
+            if(tDescr.ending > endTime || timetable.busyAt(onDay, at, endTime)) InUnitInterval(0)
+            else InUnitInterval(1)
+        }
+        .getOrElse(InUnitInterval(0))
       }
 
 
@@ -46,7 +49,9 @@ class ProfessorAgent( val id: NegotiatingAgentId
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(this.id.name + " -- " + withAg.id.name)
 
   def start(): Unit = {}
-  def stop(): Unit = ???
+  def stop(): Unit = {
+    reportTimetable()
+  }
 
 
 }
@@ -70,7 +75,7 @@ object ProfessorAgent{
 trait ProfessorAgentNegotiatingForClassRoom{
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
 
-  protected def startSearchingForClassRoom(groupNeg: Negotiation): Unit = ???
+  protected def startSearchingForClassRoom(groupNeg: Negotiation): Unit = {} //todo ???
 }
 
 trait ProfessorAgentNegotiatingWithGroup{
@@ -110,7 +115,9 @@ trait ProfessorAgentNegotiatingWithGroup{
     import classesAssessor._
     val d = classesAssessor.basedOn(lengthParam -> prop.length)
     val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
-    ClassesCounterProposal(neg.id, prop.uuid, getDecision(day), getDecision(time), getDecision(len))
+    val cprop = ClassesCounterProposal(neg.id, prop.uuid, getDecision(day), getDecision(time), getDecision(len))
+    awaitResponseFor(cprop)
+    cprop
   }
 
   def handleNegotiation: PartialFunction[Message, Unit] = {
@@ -118,22 +125,29 @@ trait ProfessorAgentNegotiatingWithGroup{
       val neg = negotiation(prop.negotiation)
       val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time.asInstanceOf[Time])
 
-      val resp = if(a > assessedThreshold(neg)) {
-                                                  neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
-                                                  neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time.asInstanceOf[Time])
-                                                  neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
-                                                  startSearchingForClassRoom(neg)
-                                                  ClassesAcceptance(neg.id, prop.uuid)
-                                                }
-                 else                           counterProposalOrRejection(prop, neg)
+      log.debug("proposal assessed: " + a)
 
+      val resp = if(a > assessedThreshold(neg)) {
+                              log.debug("Acceptance")
+                              /*todo: use Confirm message*/
+                              val start = prop.time.asInstanceOf[Time]
+                              val end = tDescr.fromMinutes(tDescr.toMinutes(start) + prop.length)
+                              val clazz = ClassId(neg(NegVars.Discipline).code)
+                              timetable.putClass(prop.day, start, end, clazz)
+
+                              neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
+                              neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time.asInstanceOf[Time])
+                              neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
+                              startSearchingForClassRoom(neg)
+                              ClassesAcceptance(neg.id, prop.uuid)
+                            }
+                 else counterProposalOrRejection(prop, neg)
+      prop.sender ! resp
   }
 
   private def respondWithDisciplinePriorities() = negotiationsByDiscipline foreach {
     case (discipline, negotiations) =>
       val negIds = negotiations.map(_.id).toSeq
-      log.debug("Professor: counterpartsFoundByTheCounterpart = " + counterpartsFoundByTheCounterpart)
-      log.debug("Professor: negIds = " + negIds)
       val counterpartsCounts = counterpartsFoundByTheCounterpart.withFilter(negIds contains _._1).map(_._2.get).toSeq
       log.debug("Professor: counterpartsCounts = " + counterpartsCounts)
       assert(counterpartsCounts.distinct.size <= 1, "received different counterparts counts: " + counterpartsCounts)
