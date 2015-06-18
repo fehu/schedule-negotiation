@@ -21,7 +21,7 @@ object Vars{
 }
 
 object NegVars{
-  object NewNegAcceptance extends NegotiationVar{ type T = mutable.Map[Discipline, Map[NegotiatingAgentId, Option[Boolean]]] }
+  object NewNegAcceptance extends NegotiationVar{ type T = Map[NegotiatingAgentId, Option[Boolean]] }
 
   object Discipline extends NegotiationVar{ type T = schedule.Discipline }
 

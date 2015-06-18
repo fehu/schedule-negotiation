@@ -1,25 +1,30 @@
 package feh.tec.agents.schedule
 
+import java.util.UUID
+
 import akka.actor.ActorLogging
 import akka.util.Timeout
 import feh.tec.agents.comm.NegotiationVar.Scope
 import feh.tec.agents.comm._
-import feh.tec.agents.comm.agent.{NegotiationReactionBuilder, Negotiating}
+import feh.tec.agents.comm.agent.{Negotiating, NegotiationReactionBuilder}
+import feh.tec.agents.comm.negotiations.Establishing._
 import feh.tec.agents.comm.negotiations.Proposals.Vars.CurrentProposal
 import feh.tec.agents.comm.negotiations._
-import Establishing._
+import feh.tec.agents.schedule.CommonAgentDefs._
 import feh.tec.agents.schedule.Messages._
-import scala.collection.mutable
+import feh.tec.agents.util.OneToOneNegotiationId
 import feh.util._
-import CommonAgentDefs._
 
+import scala.collection.mutable
 import scala.concurrent.Await
 
-class GroupAgent( val id          : NegotiatingAgentId
-                , val coordinator : AgentRef
-                , val reportTo    : SystemAgentRef
-                , val toAttend    : GroupAgent.DisciplinesToAttend
-                , val timeouts    : CommonAgentDefs.Timeouts
+class GroupAgent( val id                : NegotiatingAgentId
+                , val coordinator       : AgentRef
+                , val reportTo          : SystemAgentRef
+                , val discipline        : Discipline
+                , val disciplinePerWeek : GroupAgent.MinutesPerWeek
+                , val initialStudents   : Set[NegotiatingAgentRef]
+                , val timeouts          : CommonAgentDefs.Timeouts
                   )
   extends NegotiatingAgent
   with NegotiationReactionBuilder
@@ -32,7 +37,7 @@ class GroupAgent( val id          : NegotiatingAgentId
 {
   val classesDecider = new ClassesBasicPreferencesDeciderImplementations[Time]{
     def basedOn(p: Param[_]*): AbstractDecideInterface =
-      new DecideRandom(p, lengthDiscr = 90, toAttend(getParam(disciplineParam, p).value), timetable, log)
+      new DecideRandom(p, lengthDiscr = 90, disciplinePerWeek, timetable, log)
   }
 
 
@@ -50,7 +55,7 @@ class GroupAgent( val id          : NegotiatingAgentId
 
   def extraScopeTimeout = timeouts.extraScopeTimeout
 
-  protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(withAg.id.name + " -- " + this.id.name)
+  protected def negotiationWithId(withAg: NegotiatingAgentRef) = OneToOneNegotiationId(this.id, withAg.id)
 
   def start(): Unit = {
     startSearchingProfessors()
@@ -64,16 +69,25 @@ class GroupAgent( val id          : NegotiatingAgentId
 object GroupAgent{
   type MinutesPerWeek = Int
 
-  type DisciplinesToAttend = Map[Discipline, MinutesPerWeek]
 
   object Role extends NegotiationRole("Group")
 
-  def creator(reportTo: SystemAgentRef, toAttend: DisciplinesToAttend, timeouts: Timeouts) =
+  def creator( reportTo           : SystemAgentRef
+             , discipline         : Discipline
+             , disciplinePerWeek  : GroupAgent.MinutesPerWeek
+             , timeouts           : Timeouts
+             , initialStudents    : Set[NegotiatingAgentRef] = Set()) =
     new NegotiatingAgentCreator(Role, scala.reflect.classTag[GroupAgent],
       id => {
-        case Some(coordinator) => new GroupAgent(id, coordinator, reportTo, toAttend, timeouts)
+        case Some(coordinator) =>
+          new GroupAgent(id, coordinator, reportTo, discipline, disciplinePerWeek, initialStudents, timeouts)
       }
     )
+
+  case class AddStudent(studentRef: NegotiatingAgentRef)(implicit val sender: AgentRef) extends UUIDed with Message {
+    val tpe = "Add student"
+    val asString = studentRef.toString
+  }
 }
 
 /** Creating new proposals and evaluating already existing
@@ -150,7 +164,8 @@ trait GroupAgentNegotiating{
 trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegotiations with ActorLogging {
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
 
-  def toAttend: GroupAgent.DisciplinesToAttend
+  val discipline: Discipline
+  val disciplinePerWeek: GroupAgent.MinutesPerWeek
 
   def startNegotiatingOver(d: Discipline)
 
@@ -158,82 +173,75 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
 
   def extraScopeTimeout: Timeout
 
-  def startSearchingProfessors() =
-    SharedNegotiation.set(NegVars.NewNegAcceptance)(mutable.Map(searchProfessors().toSeq: _*))
+  def startSearchingProfessors() = SharedNegotiation.set(NegVars.NewNegAcceptance)(searchProfessors())
 
-  def searchProfessors(profRefs: Set[NegotiatingAgentRef] = SharedNegotiation(Scope).filter(_.id.role.isInstanceOf[ProfessorAgent.Role])) =
-    toAttend map {
-      case (disc, _) =>
-        val refsMap = profRefs.map{
+  def professorRefs = SharedNegotiation(Scope).filter(_.id.role.isInstanceOf[ProfessorAgent.Role])
+
+  def searchProfessors(profRefs: Set[NegotiatingAgentRef] = professorRefs) = profRefs
+    .map{
           profRef =>
-            profRef ! negotiationProposition(Vars.Discipline -> disc)
+            profRef ! negotiationProposition(Vars.Discipline -> discipline)
             profRef.id -> Option.empty[Boolean]
         }
-
-        disc -> refsMap.toMap
-    }
+    .toMap
 
   private var askedForExtraScope = false
 
   def handleNewNegotiations: PartialFunction[Message, Unit] = {
     case msg: NegotiationProposition => sys.error("todo: recall")   // todo: recall
 
-    case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(d) =>
-      add _ $ mkNegotiationWith(msg.sender, d)
+    case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
+      add _ $ mkNegotiationWith(msg.sender, discipline)
       modifyNewNegAcceptance(true, msg)
-      checkResponsesFor(d, ProfessorAgent.Role.PartTime)(extraScopeTimeout)
+      checkResponsesForPartTime()
 
-    case (msg: NegotiationRejection) /*& AwaitingResponse()*/ & WithDiscipline(d) =>
+    case (msg: NegotiationRejection) /*& AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       modifyNewNegAcceptance(false, msg)
-      checkResponsesFor(d, ProfessorAgent.Role.PartTime)(extraScopeTimeout)
+      checkResponsesForPartTime()
   }
 
-  protected def caseNobodyAccepted(counterpart: NegotiationRole, d: Discipline)(implicit extraScopeTimeout: Timeout) =
+  protected def caseNobodyAccepted(counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) =
     if (!askedForExtraScope)
       askForExtraScope(counterpart) match {
-        case set if set.isEmpty => noCounterpartFound(d)
+        case set if set.isEmpty => noCounterpartFound()
         case set => searchProfessors(set) |> {
           accMap =>
             askedForExtraScope = true
-            SharedNegotiation.transform(NegVars.NewNegAcceptance)(_.map {
-              case (k, v) => k -> (v ++ accMap.getOrElse(k, Map()))
-            })
+            SharedNegotiation.transform(NegVars.NewNegAcceptance){_ ++ accMap} // todo: check it
         }
       }
-    else noCounterpartFound(d)
+    else noCounterpartFound()
 
-  private def noCounterpartFound(d: Discipline) = {
-    reportTo ! Messages.NoCounterpartFound(d)
+  private def noCounterpartFound() = {
+    reportTo ! Messages.NoCounterpartFound(discipline)
 //    sys.error(s"no professor could be found for discipline $d")
   }
 
-  private def checkResponsesFor(d: Discipline, counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) ={
-    val acc = SharedNegotiation(NegVars.NewNegAcceptance).toMap
-    ifAllResponded _ $ d $ ifAnyAccepted(d, acc, startNegotiatingOver(d), caseNobodyAccepted(counterpart, d))
+  private def checkResponsesForPartTime() = checkResponsesFor(ProfessorAgent.Role.PartTime)(extraScopeTimeout)
+
+  private def checkResponsesFor(counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) ={
+    val acc = SharedNegotiation(NegVars.NewNegAcceptance)
+    ifAllResponded _ $ ifAnyAccepted(acc, startNegotiatingOver(discipline), caseNobodyAccepted(counterpart))
   }
 
 
-  private def modifyNewNegAcceptance(b: Boolean, msg: NegotiationEstablishingMessage) = {
-    val d = msg.get(Vars.Discipline)
-    val par = msg.sender.id -> Some(b)
-    SharedNegotiation.transform(NegVars.NewNegAcceptance)( _ $${ _ <<= (d, _.get + par) }  )
-  }
+  private def modifyNewNegAcceptance(b: Boolean, msg: NegotiationEstablishingMessage) =
+    SharedNegotiation.transform(NegVars.NewNegAcceptance)(_ + (msg.sender.id -> Some(b)))
 
-  private def ifAllResponded(d: Discipline, f: => Unit) = {
+  private def ifAllResponded(f: => Unit) = {
     val accMap = SharedNegotiation(NegVars.NewNegAcceptance)
-    if(accMap(d).forall(_._2.nonEmpty)) {
-      accMap -= d
+    if(accMap.nonEmpty && accMap.forall(_._2.nonEmpty)) {
+      SharedNegotiation.set(NegVars.NewNegAcceptance)(Map())
       f
     }
   }
 
 
-  private def ifAnyAccepted(d: Discipline,
-                            acceptance: Map[Discipline, Map[NegotiatingAgentId, Option[Boolean]]],
+  private def ifAnyAccepted(acceptance: Map[NegotiatingAgentId, Option[Boolean]],
                             f: => Unit,
                             fElse: => Unit) =
   {
-    if(acceptance(d).exists(_._2.getOrElse(false))) f else fElse
+    if(acceptance.exists(_._2.getOrElse(false))) f else fElse
   }
 
 }

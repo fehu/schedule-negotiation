@@ -52,11 +52,12 @@ object TestApp extends App{
   lazy val reportPrinter = ReportDistributedPrinter.creator("logger", "logs").create("logger")
 
   def initNegCreators = CoordinatorAgent.InitialNegotiatorsCreators(
-    groups = groups.toSeq.map{
-                               case (gId, disciplines) =>
-                                 val toAttend = disciplines.zipMap(_ => 3*60 /* todo: minutes per week */).toMap
-                                 GroupAgent.creator(reportPrinter, toAttend, timeouts)
-                             },
+//    groups = groups.toSeq.map{
+//                               case (gId, disciplines) =>
+//                                 val toAttend = disciplines.zipMap(_ => 3*60 /* todo: minutes per week */ ).toMap
+//                                 GroupAgent.creator(reportPrinter, toAttend, timeouts)
+//                             },
+    groups = Nil,
     professorsFullTime = profsCanTeach.toSeq.map{
                                             case (id, disciplines) =>
                                               ProfessorAgent.creator(_.FullTime, reportPrinter, disciplines.toSet)

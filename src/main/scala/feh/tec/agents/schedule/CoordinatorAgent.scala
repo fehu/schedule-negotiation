@@ -13,6 +13,7 @@ class CoordinatorAgent( val id              : SystemAgentId
                         )
   extends NegotiationController
   with NegotiationController.InitialAgents
+  with NegotiationController.AgentsManipulation
   with Reporting
   with ActorLogging
 {

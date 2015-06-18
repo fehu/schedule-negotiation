@@ -4,7 +4,7 @@ import akka.actor.ActorLogging
 import feh.tec.agents.comm.negotiations.Establishing.itHasValues
 import feh.tec.agents.comm.negotiations.Issues
 import feh.tec.agents.schedule.Messages._
-import feh.tec.agents.util.OneToOneNegotiation
+import feh.tec.agents.util.{OneToOneNegotiationId, OneToOneNegotiation}
 import feh.util._
 import feh.tec.agents.comm.agent.{NegotiationReactionBuilder, Negotiating}
 import feh.tec.agents.comm._
@@ -46,7 +46,7 @@ class ProfessorAgent( val id: NegotiatingAgentId
 
   def assessedThreshold(neg: Negotiation): Float = 0.7f // todo
 
-  protected def negotiationWithId(withAg: NegotiatingAgentRef) = NegotiationId(this.id.name + " -- " + withAg.id.name)
+  protected def negotiationWithId(withAg: NegotiatingAgentRef) = OneToOneNegotiationId(this.id, withAg.id)
 
   def start(): Unit = {}
   def stop(): Unit = {

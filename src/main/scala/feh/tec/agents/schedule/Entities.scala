@@ -1,7 +1,5 @@
 package feh.tec.agents.schedule
 
-import feh.tec.agents.util.{FromString, AsString}
-
 case class Discipline(code: String, name: String)
 
 object DaysOfWeek extends Enumeration{
@@ -18,20 +16,16 @@ case class Class[Time]( id        : ClassId,
                       , classroom : ClassRoomId
                         )
 
-case class ClassId(uniqueId: String) extends AsString{  def asString = uniqueId  }
-
-case class GroupId    (uniqueId: String) extends AsString{  def asString = uniqueId  }
-case class ProfessorId(uniqueId: String) extends AsString{  def asString = uniqueId  }
-//case class ProfessorId[Name](name    : Name  ) extends AsString{  def asString = name.toString  }
-case class ClassRoomId() // todo
-
-//object Ids{
-//  implicit def groupIdFromString                      : FromString[GroupId]           = FromString( GroupId )
-//  implicit def professorIdFromString[Name: FromString]: FromString[ProfessorId[Name]] = FromString(
-//    name =>
-//      ProfessorId( implicitly[FromString[Name]].fromString(name) )
-//  )
+//trait EntityId{
+//  def uniqueId: String
 //}
+
+case class ClassId(uniqueId: String) //extends EntityId
+
+case class StudentId  (uniqueId: String) //extends EntityId
+case class GroupId    (uniqueId: String) //extends EntityId
+case class ProfessorId(uniqueId: String) //extends EntityId
+case class ClassRoomId(uniqueId: String) //extends EntityId
 
 trait TimeDescriptor[Time]{
   def domain: Stream[Time]
