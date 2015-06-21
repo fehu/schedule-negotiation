@@ -1,6 +1,7 @@
 package feh.tec.agents.schedule
 
-import feh.tec.agents.schedule.ReadDisciplinesSelections.DisciplinesSelections
+import feh.tec.agents.schedule.io.DisciplinesSelections
+import DisciplinesSelections.DisciplinesSelections
 
 trait GroupGenerator {
   def divideIntoGroup(disciplinesSelections: DisciplinesSelections): Map[GroupId, Seq[Discipline]]

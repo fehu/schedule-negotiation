@@ -12,6 +12,7 @@ import feh.tec.agents.comm.negotiations.Proposals.Vars.CurrentProposal
 import feh.tec.agents.comm.negotiations._
 import feh.tec.agents.schedule.CommonAgentDefs._
 import feh.tec.agents.schedule.Messages._
+import feh.tec.agents.schedule.io.StudentsSelection
 import feh.tec.agents.util.OneToOneNegotiationId
 import feh.util._
 
@@ -67,7 +68,7 @@ class GroupAgent( val id                : NegotiatingAgentId
 }
 
 object GroupAgent{
-  type MinutesPerWeek = Int
+  type MinutesPerWeek = StudentsSelection.MinutesPerWeek
 
 
   object Role extends NegotiationRole("Group")

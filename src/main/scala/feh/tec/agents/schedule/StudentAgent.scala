@@ -3,6 +3,7 @@ package feh.tec.agents.schedule
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm._
+import feh.tec.agents.schedule.io.StudentsSelection
 import feh.tec.agents.util.OneToOneNegotiationId
 
 class StudentAgent( val id          : NegotiatingAgentId
@@ -22,7 +23,14 @@ class StudentAgent( val id          : NegotiatingAgentId
 }
 
 object StudentAgent{
-  type MinutesPerWeek = Int
+  type MinutesPerWeek = StudentsSelection.MinutesPerWeek
 
   type DisciplinesToAttend = Map[Discipline, MinutesPerWeek]
+
+  object Role extends NegotiationRole("student")
+
+
+  def creator(reportTo: SystemAgentRef, toAttend: StudentAgent.DisciplinesToAttend) =
+    new NegotiatingAgentCreator[StudentAgent](Role, scala.reflect.classTag[StudentAgent],
+                                              id => _ => new StudentAgent(id, reportTo, toAttend))
 }

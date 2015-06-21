@@ -22,7 +22,7 @@ case class Class[Time]( id        : ClassId,
 
 case class ClassId(uniqueId: String) //extends EntityId
 
-case class StudentId  (uniqueId: String) //extends EntityId
+case class StudentId  (tag: String, career: String)
 case class GroupId    (uniqueId: String) //extends EntityId
 case class ProfessorId(uniqueId: String) //extends EntityId
 case class ClassRoomId(uniqueId: String) //extends EntityId

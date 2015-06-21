@@ -3,6 +3,7 @@ package feh.tec.agents.schedule
 import akka.actor.{Props, ActorSystem}
 import feh.tec.agents.comm._
 import feh.tec.agents.schedule.CommonAgentDefs.Timeouts
+import feh.tec.agents.schedule.io.{StudentsSelection, ProfsCanTeach, DisciplinesSelections}
 import feh.util.Path./
 import feh.util._
 import scala.concurrent.duration._
@@ -13,33 +14,40 @@ object TestApp extends App{
                                            , maxStudentsInGroup = 20
                                           )
 
-  lazy val disciplinesSelection = ReadDisciplinesSelections.fromXLS(
-    path      = / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "Pronosticos EM09_TI.xls",
-    sheetName = "Materias"
-  )
+//  lazy val disciplinesSelection = ReadDisciplinesSelections.read(
+//    path      = / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "Pronosticos EM09_TI.xls",
+//    sheetName = "Materias"
+//  )
 
-  lazy val disciplineByCode = disciplinesSelection.keys.map(d => d.code -> d).toMap
+//  lazy val disciplineByCode = disciplinesSelection.keys.map(d => d.code -> d).toMap
 
 
   // todo: !!! full-time or part-time ???
-  lazy val profsCanTeach = ReadProfsCanTeach.fromXLS(
-    / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "ProfsCanTeach.xls",
-    disciplineByCode
+  lazy val profsCanTeach = ProfsCanTeach.fromXLS(
+    / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "ProfsCanTeach.xls"
   )
 
   // todo: !!! full-time or part-time ???
   lazy val professors = profsCanTeach.keySet
 
-  lazy val groups = GroupGenerator.create.divideIntoGroup(disciplinesSelection)
+  lazy val disciplineByName = profsCanTeach.values.flatten.map(d => d.code -> d).toMap
+
+  lazy val students = StudentsSelection.read(
+    Path.absolute("/home/fehu/study/tec/agents/Thesis/data/200911_09062015.xlsx", '/'),
+    sheetName = "alumno-materia"
+  )
+
+//  lazy val groups = GroupGenerator.create.divideIntoGroup(disciplinesSelection)
 
 
-  println("disciplines: " + disciplinesSelection)
+//  println("disciplines: " + disciplinesSelection)
   println("profsCanTeach: " + profsCanTeach)
-  println("groups: " + groups)
+//  println("groups: " + groups)
 
-  println("size disciplines: " + disciplinesSelection.size)
+  println("size students: " + students.size)
+  println("size disciplines: " + disciplineByName.size)
   println("size profsCanTeach: " + profsCanTeach.size)
-  println("size groups: " + groups.size)
+//  println("size groups: " + groups.size)
 
 
 
@@ -57,6 +65,13 @@ object TestApp extends App{
 //                                 val toAttend = disciplines.zipMap(_ => 3*60 /* todo: minutes per week */ ).toMap
 //                                 GroupAgent.creator(reportPrinter, toAttend, timeouts)
 //                             },
+    students = students.map{
+      case (id, disciplines) =>
+        val toAttend = disciplines.flatMap{
+                         case (k, v) => disciplineByName.get(k).map(_ -> v) // todo: not all profs and disciplines exist
+                       }
+        StudentAgent.creator(reportPrinter, toAttend)
+    },
     groups = Nil,
     professorsFullTime = profsCanTeach.toSeq.map{
                                             case (id, disciplines) =>

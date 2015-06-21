@@ -63,13 +63,16 @@ object CoordinatorAgent{
     val asString = s"for role $role"
   }
 
-  case class InitialNegotiatorsCreators( groups             : Seq[NegotiatingAgentCreator[GroupAgent]]
-                                       , professorsFullTime : Seq[NegotiatingAgentCreator[ProfessorAgent]]
-                                       , professorsPartTime : Seq[NegotiatingAgentCreator[ProfessorAgent]]
+  type Creators[Ag <: NegotiatingAgent] = Iterable[NegotiatingAgentCreator[Ag]]
+
+  case class InitialNegotiatorsCreators( students           : Creators[StudentAgent]
+                                       , groups             : Creators[GroupAgent]
+                                       , professorsFullTime : Creators[ProfessorAgent]
+                                       , professorsPartTime : Creators[ProfessorAgent]
                                        // todo: ClassRoom
                                          )
   {
-    def join = groups ++ professorsFullTime ++ professorsPartTime
+    def join = (students ++ groups ++ professorsFullTime ++ professorsPartTime).toSeq
   }
 
   def role = SystemAgentRole("Coordinator")
