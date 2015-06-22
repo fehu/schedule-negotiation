@@ -1,11 +1,12 @@
 package feh.tec.agents.schedule
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ActorSystem, Props}
 import feh.tec.agents.comm._
 import feh.tec.agents.schedule.CommonAgentDefs.Timeouts
-import feh.tec.agents.schedule.io.{StudentsSelection, ProfsCanTeach, DisciplinesSelections}
+import feh.tec.agents.schedule.io.{ProfsCanTeach, StudentsSelection}
 import feh.util.Path./
 import feh.util._
+
 import scala.concurrent.duration._
 
 object TestApp extends App{
@@ -14,39 +15,28 @@ object TestApp extends App{
                                            , maxStudentsInGroup = 20
                                           )
 
-//  lazy val disciplinesSelection = ReadDisciplinesSelections.read(
-//    path      = / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "Pronosticos EM09_TI.xls",
-//    sheetName = "Materias"
-//  )
-
-//  lazy val disciplineByCode = disciplinesSelection.keys.map(d => d.code -> d).toMap
-
-
   // todo: !!! full-time or part-time ???
-  lazy val profsCanTeach = ProfsCanTeach.fromXLS(
-    / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "ProfsCanTeach.xls"
+  lazy val profsCanTeach = ProfsCanTeach.read(
+    / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "schedule.xlsx",
+    sheetName = "programacionGrupos"
   )
 
-  // todo: !!! full-time or part-time ???
-  lazy val professors = profsCanTeach.keySet
+  lazy val (professorsFullTime, professorsPartTime) = profsCanTeach.partition(_._1._2)
 
-  lazy val disciplineByName = profsCanTeach.values.flatten.map(d => d.code -> d).toMap
+  lazy val disciplineByCode = profsCanTeach.values.flatten.map(d => d.code -> d).toMap
 
   lazy val students = StudentsSelection.read(
-    Path.absolute("/home/fehu/study/tec/agents/Thesis/data/200911_09062015.xlsx", '/'),
+    Path.absolute("/home/fehu/study/tec/agents/Thesis/data/schedule.xlsx", '/'),
     sheetName = "alumno-materia"
   )
 
 //  lazy val groups = GroupGenerator.create.divideIntoGroup(disciplinesSelection)
 
 
-//  println("disciplines: " + disciplinesSelection)
-  println("profsCanTeach: " + profsCanTeach)
-//  println("groups: " + groups)
-
   println("size students: " + students.size)
-  println("size disciplines: " + disciplineByName.size)
-  println("size profsCanTeach: " + profsCanTeach.size)
+  println("size disciplines: " + disciplineByCode.size)
+  println("size professorsFullTime: " + professorsFullTime.size)
+  println("size professorsPartTime: " + professorsPartTime.size)
 //  println("size groups: " + groups.size)
 
 
@@ -67,18 +57,23 @@ object TestApp extends App{
 //                             },
     students = students.map{
       case (id, disciplines) =>
-        val toAttend = disciplines.flatMap{
-                         case (k, v) => disciplineByName.get(k).map(_ -> v) // todo: not all profs and disciplines exist
-                       }
+//        val toAttend = disciplines.flatMap{
+//                         case (k, v) => disciplineByName.get(k).map(_ -> v) // todo: not all profs and disciplines exist
+//                       }
+        val toAttend = disciplines.mapKeys(disciplineByCode)
         StudentAgent.creator(reportPrinter, toAttend)
     },
     groups = Nil,
-    professorsFullTime = profsCanTeach.toSeq.map{
-                                            case (id, disciplines) =>
-                                              ProfessorAgent.creator(_.FullTime, reportPrinter, disciplines.toSet)
-                                       },
-    professorsPartTime = Nil // todo: part-time professors
+    professorsFullTime = mkProfessors(professorsFullTime, _.FullTime),
+    professorsPartTime = mkProfessors(professorsPartTime, _.PartTime)
   )
+
+  private def mkProfessors( profs: Map[(ProfessorId, ProfsCanTeach.IsFullTime), scala.Seq[Discipline]]
+                          , role: ProfessorAgent.Role.type => ProfessorAgent.Role
+                          ) = profs.toSeq.map{
+                              case ((id, _), disciplines) =>
+                                ProfessorAgent.creator(role, reportPrinter, disciplines.toSet)
+                            }
 
   lazy val controller = CoordinatorAgent.creator(reportPrinter, initNegCreators).create("controller")
 
