@@ -41,7 +41,7 @@ class ProfessorAgent( val id: NegotiatingAgentId
 
 
       def basedOn(p: Param[_]*): AbstractDecideInterface =
-        new DecideRandom(p, lengthDiscr = 90, getParam(lengthParam, p).value, timetable, log)
+        new DecideRandom(p, lengthDiscr = 60, getParam(lengthParam, p).value, timetable, log)
     }
 
   def assessedThreshold(neg: Negotiation): Float = 0.7f // todo

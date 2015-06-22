@@ -10,3 +10,4 @@
 - [x] repair WithDiscipline
 
 - [ ] schedule labs
+- [ ] force stopping

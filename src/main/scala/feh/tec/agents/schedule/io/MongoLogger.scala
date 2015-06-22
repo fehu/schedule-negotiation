@@ -27,7 +27,7 @@ protected[io] class MongoLogger(val id: SystemAgentId, collection: BSONCollectio
 }
 
 
-class ReportDistributedMongoLogger(connection: MongoConnection)
+class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duration)
                                   (implicit exContext: ExecutionContext,
                                             format: ReportLogFormat) extends ReportLogger with ActorLogging
 {
@@ -46,14 +46,13 @@ class ReportDistributedMongoLogger(connection: MongoConnection)
     case _: SystemMessage.Start => start()
   }: PartialFunction[SystemMessage, Unit]) orElse super.systemMessageReceived
 
-  protected var dbConnection: DefaultDB = null
+  protected lazy val dbConnection = connection("logs")
 
   def start(): Unit = {
     val db_ = connection("logs")
-    db_.drop()
-    implicit val db = connection("logs")
+    Await.ready(db_.drop(), 2.seconds)
 
-    dbConnection = db
+    implicit val db = dbConnection
 
     loggers = mkLogger(_ == GroupAgent.Role, "groups") ::
               mkLogger(_ == CoordinatorAgent.role, "controller") ::
@@ -70,7 +69,7 @@ class ReportDistributedMongoLogger(connection: MongoConnection)
         val logger = ReportDistributedMongoLogger.newLogger(id, collection)
         filter -> logger
       }
-    Await.result(fut, 2000.millis)
+    Await.result(fut, timeout)
   }
 
 
@@ -88,15 +87,17 @@ object ReportDistributedMongoLogger{
                                         format: ReportLogFormat) =
     afact.actorOf(Props(new MongoLogger(id, collection)(afact.dispatcher, implicitly)))
 
-  def creator(connection: MongoConnection)
+  def creator(connection: MongoConnection, timeout: Duration)
              (implicit exContext: ExecutionContext, format: ReportLogFormat) =
-    AgentCreator(LoggerRole){_ => _ => new ReportDistributedMongoLogger(connection)}
+    AgentCreator(LoggerRole){_ => _ => new ReportDistributedMongoLogger(connection, timeout)}
 
 
   def reportDocumentWriter(format: ReportLogFormat): BSONDocumentWriter[Report] = new BSONDocumentWriter[Report]{
-    def write(t: Report) = BSONDocument( "_id" -> t.uuid.toString
-                                       , "sender" -> t.sender.id.toString
-                                       , "report" -> format(t)
+    def write(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
+                                       , "sender"      -> t.sender.id.name
+                                       , "sender-role" -> t.sender.id.role.toString
+                                       , "report"      -> format(t)
+                                       , "time"        -> System.nanoTime()
                                        )
   }
 }

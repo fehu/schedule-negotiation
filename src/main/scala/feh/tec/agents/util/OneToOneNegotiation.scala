@@ -8,6 +8,8 @@ case class OneToOneNegotiationId(fst: AgentId, snd: AgentId) extends Negotiation
   override def equals(obj: scala.Any): Boolean = canEqual(obj) && (obj match {
     case OneToOneNegotiationId(fst2, snd2) => fst == fst2 && snd == snd2 || fst == snd2 && snd == fst2
   })
+
+  override def hashCode(): Int = math.abs(fst.hashCode() + snd.hashCode()) // todo ???
 }
 
 trait OneToOneNegotiation extends Negotiation{

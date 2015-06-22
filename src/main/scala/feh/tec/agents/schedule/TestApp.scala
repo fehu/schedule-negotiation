@@ -46,14 +46,14 @@ object TestApp extends App{
 
   implicit def logFormat = ReportLogFormat.Pretty
 
-  lazy val timeouts = Timeouts(extraScopeTimeout = 2.seconds)
+  lazy val timeouts = Timeouts(extraScopeTimeout = 10.seconds)
 
   val driver = new MongoDriver
   lazy val logDb = driver.connection(List("localhost"))
 
   lazy val loggingActors = ActorSystem("logs")
 
-  lazy val reportPrinter = ReportDistributedMongoLogger.creator(logDb)(loggingActors.dispatcher, implicitly)
+  lazy val reportPrinter = ReportDistributedMongoLogger.creator(logDb, 2000.millis)(loggingActors.dispatcher, implicitly)
                                                        .create("the-logger")(loggingActors)
 
     //ReportDistributedPrinter.creator("logger", "logs").create("logger")
@@ -81,7 +81,7 @@ object TestApp extends App{
                       ag => {
                         import ag._
                         reportPrinter ! SystemMessage.Start()
-                        Thread.sleep(3000)
+                        Thread.sleep(2200)
                         controller ! SystemMessage.Start()
                         controller ! SystemMessage.Initialize()
                         Thread sleep 300

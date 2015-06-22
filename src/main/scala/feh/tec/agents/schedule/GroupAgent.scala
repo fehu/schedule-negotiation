@@ -39,7 +39,7 @@ class GroupAgent( val id                : NegotiatingAgentId
 {
   val classesDecider = new ClassesBasicPreferencesDeciderImplementations[Time]{
     def basedOn(p: Param[_]*): AbstractDecideInterface =
-      new DecideRandom(p, lengthDiscr = 90, getParam(disciplineParam, p).value.classes/*todo: labs*/, timetable, log)
+      new DecideRandom(p, lengthDiscr = 60, getParam(disciplineParam, p).value.classes/*todo: labs*/, timetable, log)
   }
 
 
