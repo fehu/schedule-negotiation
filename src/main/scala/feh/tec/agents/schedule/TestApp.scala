@@ -3,9 +3,10 @@ package feh.tec.agents.schedule
 import akka.actor.{ActorSystem, Props}
 import feh.tec.agents.comm._
 import feh.tec.agents.schedule.CommonAgentDefs.Timeouts
-import feh.tec.agents.schedule.io.{ProfsCanTeach, StudentsSelection}
+import feh.tec.agents.schedule.io.{ReportDistributedMongoLogger, ProfsCanTeach, StudentsSelection}
 import feh.util.Path./
 import feh.util._
+import reactivemongo.api.MongoDriver
 
 import scala.concurrent.duration._
 
@@ -47,7 +48,15 @@ object TestApp extends App{
 
   lazy val timeouts = Timeouts(extraScopeTimeout = 2.seconds)
 
-  lazy val reportPrinter = ReportDistributedPrinter.creator("logger", "logs").create("logger")
+  val driver = new MongoDriver
+  lazy val logDb = driver.connection(List("localhost"))
+
+  lazy val loggingActors = ActorSystem("logs")
+
+  lazy val reportPrinter = ReportDistributedMongoLogger.creator(logDb)(loggingActors.dispatcher, implicitly)
+                                                       .create("the-logger")(loggingActors)
+
+    //ReportDistributedPrinter.creator("logger", "logs").create("logger")
 
   def initNegCreators = CoordinatorAgent.InitialNegotiatorsCreators(
     students = students.map{
@@ -71,6 +80,8 @@ object TestApp extends App{
     new DeafUserAgent(UserAgentId("admin", UserAgentRole("admin")), None,
                       ag => {
                         import ag._
+                        reportPrinter ! SystemMessage.Start()
+                        Thread.sleep(3000)
                         controller ! SystemMessage.Start()
                         controller ! SystemMessage.Initialize()
                         Thread sleep 300

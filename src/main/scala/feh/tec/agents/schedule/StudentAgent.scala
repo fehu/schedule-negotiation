@@ -47,7 +47,7 @@ object StudentAgent{
                              (implicit val sender: AgentRef) extends UUIDed with Message
   {
     val tpe = "Assign me to groups"
-    val asString = disciplines.mkString(", ")
+    val asString = studentId + ": " + disciplines.mkString(", ")
   }
 
 
