@@ -24,10 +24,14 @@ object ProfsCanTeach extends XLSHelper{
                 val disciplineName = row.getCell(7).getStringCellValue
                 val disciplineCode = disciplineCodePrefix + disciplineCodeSuffix
 
+                val classesPerWeek = row.getCell(9).getNumericCellValue.toInt
+                val labsPerWeek = row.getCell(10).getNumericCellValue.toInt
+
                 val profTag = row.getCell(35).getStringCellValue
                 val profFullTime = Option(row.getCell(40)).exists(_.getStringCellValue == "Planta")
 
-                (ProfessorId(profTag), profFullTime) -> Discipline(disciplineCode, disciplineName)
+                (ProfessorId(profTag), profFullTime) ->
+                  Discipline(disciplineCode, disciplineName, classesPerWeek*60, labsPerWeek*60)
             }
         }
     }

@@ -7,7 +7,7 @@ object StudentsSelection extends XLSHelper{
   type DisciplineCode = String
   type MinutesPerWeek = Int
 
-  def read(path: Path, sheetName: String = null): Map[StudentId, Map[DisciplineCode, MinutesPerWeek]] = withBook(path) {
+  def read(path: Path, sheetName: String = null): Map[StudentId, Seq[DisciplineCode]] = withBook(path) {
     implicit book =>
       withSheet.byNameOrFirst(sheetName) {
         implicit sheet =>
@@ -20,14 +20,9 @@ object StudentsSelection extends XLSHelper{
               val disciplineCodeSuffix = row.getCell(6).getStringCellValue
               val disciplineCode = disciplineCodePrefix + disciplineCodeSuffix
 
-              val hoursPerWeek   = row.getCell(9).getNumericCellValue match {
-                case 0 => row.getCell(10).getNumericCellValue
-                case x => x
-              }
-
-             StudentId(tag, career) -> (disciplineCode, hoursPerWeek.toInt * 60)
+             StudentId(tag, career) -> disciplineCode
          }
-         selectionSeq.groupBy(_._1).mapValues(_.map(_._2).toMap)
+         selectionSeq.groupBy(_._1).mapValues(_.map(_._2))
 
     }
   }

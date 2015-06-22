@@ -1,6 +1,11 @@
 package feh.tec.agents.schedule
 
-case class Discipline(code: String, name: String)
+case class Discipline(code: String, name: String, classes: Discipline.MinutesPerWeek, labs: Discipline.MinutesPerWeek)
+
+
+object Discipline{
+  type MinutesPerWeek = Int
+}
 
 object DaysOfWeek extends Enumeration{
   val Mon, Tue, Wed, Thu, Sat, Sun = Value
@@ -22,7 +27,7 @@ case class Class[Time]( id        : ClassId,
 
 case class ClassId(uniqueId: String) //extends EntityId
 
-case class StudentId  (tag: String, career: String)
+case class StudentId  (tag: String, career: StudentAgent.Career)
 case class GroupId    (uniqueId: String) //extends EntityId
 case class ProfessorId(uniqueId: String) //extends EntityId
 case class ClassRoomId(uniqueId: String) //extends EntityId

@@ -50,18 +50,8 @@ object TestApp extends App{
   lazy val reportPrinter = ReportDistributedPrinter.creator("logger", "logs").create("logger")
 
   def initNegCreators = CoordinatorAgent.InitialNegotiatorsCreators(
-//    groups = groups.toSeq.map{
-//                               case (gId, disciplines) =>
-//                                 val toAttend = disciplines.zipMap(_ => 3*60 /* todo: minutes per week */ ).toMap
-//                                 GroupAgent.creator(reportPrinter, toAttend, timeouts)
-//                             },
     students = students.map{
-      case (id, disciplines) =>
-//        val toAttend = disciplines.flatMap{
-//                         case (k, v) => disciplineByName.get(k).map(_ -> v) // todo: not all profs and disciplines exist
-//                       }
-        val toAttend = disciplines.mapKeys(disciplineByCode)
-        StudentAgent.creator(reportPrinter, toAttend)
+      case (id, disciplines) => StudentAgent.creator(reportPrinter, disciplines map disciplineByCode)
     },
     groups = Nil,
     professorsFullTime = mkProfessors(professorsFullTime, _.FullTime),
@@ -75,7 +65,7 @@ object TestApp extends App{
                                 ProfessorAgent.creator(role, reportPrinter, disciplines.toSet)
                             }
 
-  lazy val controller = CoordinatorAgent.creator(reportPrinter, initNegCreators).create("controller")
+  lazy val controller = CoordinatorAgent.creator(reportPrinter, timeouts, implicitly ,initNegCreators).create("controller")
 
     asys actorOf Props(
     new DeafUserAgent(UserAgentId("admin", UserAgentRole("admin")), None,

@@ -5,10 +5,11 @@ import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm._
 import feh.tec.agents.schedule.io.StudentsSelection
 import feh.tec.agents.util.OneToOneNegotiationId
+import feh.util.UUIDed
 
 class StudentAgent( val id          : NegotiatingAgentId
                   , val reportTo    : SystemAgentRef
-                  , val toAttend    : StudentAgent.DisciplinesToAttend)
+                  , val toAttend    : Seq[Discipline])
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
@@ -25,12 +26,20 @@ class StudentAgent( val id          : NegotiatingAgentId
 object StudentAgent{
   type MinutesPerWeek = StudentsSelection.MinutesPerWeek
 
-  type DisciplinesToAttend = Map[Discipline, MinutesPerWeek]
+  type Career = String
 
   object Role extends NegotiationRole("student")
 
 
-  def creator(reportTo: SystemAgentRef, toAttend: StudentAgent.DisciplinesToAttend) =
+  def creator(reportTo: SystemAgentRef, toAttend: Seq[Discipline]) =
     new NegotiatingAgentCreator[StudentAgent](Role, scala.reflect.classTag[StudentAgent],
                                               id => _ => new StudentAgent(id, reportTo, toAttend))
+
+
+
+  case class AssignMeToAGroup(implicit val sender: AgentRef) extends UUIDed with Message{
+    val tpe = "Assign me to a group"
+    val asString = ""
+  }
+
 }

@@ -5,10 +5,16 @@ import java.util.UUID
 import akka.actor.{SupervisorStrategy, ActorLogging}
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{Reporting, SystemSupport}
+import feh.tec.agents.schedule.CommonAgentDefs.Timeouts
+import feh.util._
+
+import scala.collection.mutable
 
 /*  TODO:  several ???  */
 class CoordinatorAgent( val id              : SystemAgentId
                       , val reportTo        : SystemAgentRef
+                      , val timeouts        : Timeouts
+                      , val schedulePolicy  : SchedulePolicy
                       , val initNegCreators : CoordinatorAgent.InitialNegotiatorsCreators
                         )
   extends NegotiationController
@@ -42,7 +48,9 @@ class CoordinatorAgent( val id              : SystemAgentId
     case _ => Nil
   }
 
-  def messageReceived: PartialFunction[Message, Unit] = {
+  def messageReceived = handleMessages
+
+  def handleMessages: PartialFunction[Message, Unit] = {
     case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) =>
       sender() ! negotiatorsByRole.getOrElse(ProfessorAgent.Role.PartTime, Nil).toSet
     case _: Messages.NoCounterpartFound => // todo
@@ -51,6 +59,35 @@ class CoordinatorAgent( val id              : SystemAgentId
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}
 
   override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
+}
+
+
+trait CoordinatorAgentStudentsHandling{
+  agent: NegotiationController with Reporting =>
+
+
+  def timeouts: Timeouts
+  def schedulePolicy: SchedulePolicy
+
+  protected val groups = mutable.HashMap.empty[(Discipline, StudentAgent.Career, Int), NegotiatingAgentRef]
+
+  protected def newGroup(discipline: Discipline)=
+    mkNegotiators(GroupAgent.creator(reportTo, discipline, timeouts, schedulePolicy))
+
+  def getGroups(discipline: Discipline, career: StudentAgent.Career) = groups.collect{
+    case ((`discipline`, `career`, _), group) => group
+  }.toList
+
+  def getGroupsNonEmpty(discipline: Discipline, career: StudentAgent.Career) = getGroups(discipline, career) match {
+    case Nil => newGroup(discipline)
+    case list => list
+  }
+
+  def handleStudents: PartialFunction[Message, Unit] = {
+    case msg@StudentAgent.AssignMeToAGroup() =>
+      assert(msg.sender.id.role == StudentAgent.Role, "sent not by a student: " + msg)
+      ???
+  }
 }
 
 object CoordinatorAgent{
@@ -77,10 +114,12 @@ object CoordinatorAgent{
 
   def role = SystemAgentRole("Coordinator")
 
-  def creator(reportTo: SystemAgentRef,
-              initNegCreators: CoordinatorAgent.InitialNegotiatorsCreators) =
+  def creator( reportTo       : SystemAgentRef
+             , timeouts       : Timeouts
+             , schedulePolicy : SchedulePolicy
+             , initNegCreators: CoordinatorAgent.InitialNegotiatorsCreators) =
     new SystemAgentCreator[CoordinatorAgent](role,
                                              scala.reflect.classTag[CoordinatorAgent],
-                                             id => _ => new CoordinatorAgent(id, reportTo, initNegCreators)
+                                             id => _ => new CoordinatorAgent(id, reportTo, timeouts, schedulePolicy, initNegCreators)
     )
 }

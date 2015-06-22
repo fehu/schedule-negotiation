@@ -23,9 +23,9 @@ class GroupAgent( val id                : NegotiatingAgentId
                 , val coordinator       : AgentRef
                 , val reportTo          : SystemAgentRef
                 , val discipline        : Discipline
-                , val disciplinePerWeek : GroupAgent.MinutesPerWeek
                 , val initialStudents   : Set[NegotiatingAgentRef]
                 , val timeouts          : CommonAgentDefs.Timeouts
+                , val schedulePolicy    : SchedulePolicy
                   )
   extends NegotiatingAgent
   with NegotiationReactionBuilder
@@ -33,16 +33,18 @@ class GroupAgent( val id                : NegotiatingAgentId
   with GroupAgentNegotiationPropositionsHandling
   with GroupAgentNegotiating
   with GroupAgentProposals
+  with GroupAgentStudentsHandling
   with ActorLogging
   with AgentsTime
 {
   val classesDecider = new ClassesBasicPreferencesDeciderImplementations[Time]{
     def basedOn(p: Param[_]*): AbstractDecideInterface =
-      new DecideRandom(p, lengthDiscr = 90, disciplinePerWeek, timetable, log)
+      new DecideRandom(p, lengthDiscr = 90, getParam(disciplineParam, p).value.classes/*todo: labs*/, timetable, log)
   }
 
 
-  def messageReceived: PartialFunction[Message, Unit] = handleNewNegotiations orElse handleMessage
+  def messageReceived: PartialFunction[Message, Unit] =
+    handleNewNegotiations orElse handleMessage orElse handleStudents
 
   def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] = {
     log.debug("askForExtraScope")
@@ -68,25 +70,35 @@ class GroupAgent( val id                : NegotiatingAgentId
 }
 
 object GroupAgent{
-  type MinutesPerWeek = StudentsSelection.MinutesPerWeek
+  type MinutesPerWeek = Discipline.MinutesPerWeek
 
 
   object Role extends NegotiationRole("Group")
 
   def creator( reportTo           : SystemAgentRef
              , discipline         : Discipline
-             , disciplinePerWeek  : GroupAgent.MinutesPerWeek
              , timeouts           : Timeouts
+             , schedulePolicy     : SchedulePolicy
              , initialStudents    : Set[NegotiatingAgentRef] = Set()) =
     new NegotiatingAgentCreator(Role, scala.reflect.classTag[GroupAgent],
       id => {
         case Some(coordinator) =>
-          new GroupAgent(id, coordinator, reportTo, discipline, disciplinePerWeek, initialStudents, timeouts)
+          new GroupAgent(id, coordinator, reportTo, discipline, initialStudents, timeouts, schedulePolicy)
       }
     )
 
   case class AddStudent(studentRef: NegotiatingAgentRef)(implicit val sender: AgentRef) extends UUIDed with Message {
     val tpe = "Add student"
+    val asString = studentRef.toString
+  }
+
+  case class RmStudent(studentRef: NegotiatingAgentRef)(implicit val sender: AgentRef) extends UUIDed with Message {
+    val tpe = "Remove student"
+    val asString = studentRef.toString
+  }
+
+  case class GroupIsFull(studentRef: NegotiatingAgentRef)(implicit val sender: AgentRef) extends UUIDed with Message {
+    val tpe = "I am full. Returning the student"
     val asString = studentRef.toString
   }
 }
@@ -166,7 +178,6 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
 
   val discipline: Discipline
-  val disciplinePerWeek: GroupAgent.MinutesPerWeek
 
   def startNegotiatingOver(d: Discipline)
 
@@ -245,4 +256,21 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
     if(acceptance.exists(_._2.getOrElse(false))) f else fElse
   }
 
+}
+
+trait GroupAgentStudentsHandling{
+  agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
+
+  def schedulePolicy: SchedulePolicy
+
+  protected val students = mutable.HashSet.empty[NegotiatingAgentRef]
+
+  def handleStudents: PartialFunction[Message, Unit] = {
+    case msg: GroupAgent.AddStudent if students.size >= schedulePolicy.maxStudentsInGroup =>
+      msg.sender ! GroupAgent.GroupIsFull(msg.studentRef)
+    case GroupAgent.AddStudent(studentRef) =>
+      students += studentRef
+    case GroupAgent.RmStudent(studentRef) =>
+      students -= studentRef
+  }
 }
