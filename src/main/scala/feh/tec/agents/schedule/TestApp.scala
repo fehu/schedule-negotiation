@@ -81,7 +81,7 @@ object TestApp extends App{
                       ag => {
                         import ag._
                         reportPrinter ! SystemMessage.Start()
-                        Thread.sleep(2200)
+                        Thread.sleep(5200)
                         controller ! SystemMessage.Start()
                         controller ! SystemMessage.Initialize()
                         Thread sleep 300
@@ -90,6 +90,9 @@ object TestApp extends App{
                         val cntrl = ActorRefExtractor(controller).actorRef
                         asys.scheduler.scheduleOnce(10 seconds span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
                         asys.scheduler.scheduleOnce(30 seconds span, cntrl, SystemMessage.Stop())(asys.dispatcher)
+
+                        Thread sleep 40000
+                        asys.awaitTermination()
                       })
   )
 

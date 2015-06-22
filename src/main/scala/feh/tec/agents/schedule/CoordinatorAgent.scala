@@ -25,6 +25,8 @@ class CoordinatorAgent( val id              : SystemAgentId
   with ActorLogging
 {
 
+  def stopped = false
+
   val Reporting = new ReportingConfig(messageSent = true, messageReceived = true)
 
   /** A SystemMessage was sent message by an agent with not a SystemAgentId */

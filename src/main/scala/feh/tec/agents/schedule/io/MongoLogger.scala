@@ -17,7 +17,7 @@ protected[io] class MongoLogger(val id: SystemAgentId, collection: BSONCollectio
   implicit lazy val writer = ReportDistributedMongoLogger.reportDocumentWriter(format)
 
   def log(msg: Report): Unit = {
-    collection.insert(msg)
+    collection.insert(msg).onFailure{ case thr: Throwable => throw thr }
   }
 
   protected def onMessageSent(msg: Message, to: AgentRef): Unit = {}
@@ -49,8 +49,7 @@ class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duratio
   protected lazy val dbConnection = connection("logs")
 
   def start(): Unit = {
-    val db_ = connection("logs")
-    Await.ready(db_.drop(), 2.seconds)
+    Await.ready(dbConnection.drop(), 5.seconds)
 
     implicit val db = dbConnection
 
