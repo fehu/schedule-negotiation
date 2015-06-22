@@ -8,7 +8,9 @@ import feh.tec.agents.util.OneToOneNegotiationId
 import feh.util.UUIDed
 
 class StudentAgent( val id          : NegotiatingAgentId
+                  , val studentId   : StudentId
                   , val reportTo    : SystemAgentRef
+                  , val coordinator : AgentRef
                   , val toAttend    : Seq[Discipline])
   extends NegotiatingAgent
   with NegotiationReactionBuilder
@@ -17,9 +19,11 @@ class StudentAgent( val id          : NegotiatingAgentId
 {
   protected def negotiationWithId(withAg: NegotiatingAgentRef): NegotiationId = OneToOneNegotiationId(this.id, withAg.id)
 
+  override lazy val Reporting = new ReportingNegotiationsConfig(messageSent = true, messageReceived = true)
+
   def messageReceived: PartialFunction[Message, Unit] = ???
 
-  def start(): Unit = ???
+  def start(): Unit = coordinator ! StudentAgent.AssignMeToGroups(studentId, toAttend)
   def stop(): Unit = ???
 }
 
@@ -28,18 +32,36 @@ object StudentAgent{
 
   type Career = String
 
-  object Role extends NegotiationRole("student")
+  object Role extends NegotiationRole("Student")
 
 
-  def creator(reportTo: SystemAgentRef, toAttend: Seq[Discipline]) =
+  def creator(reportTo: SystemAgentRef, studentId: StudentId, toAttend: Seq[Discipline]) =
     new NegotiatingAgentCreator[StudentAgent](Role, scala.reflect.classTag[StudentAgent],
-                                              id => _ => new StudentAgent(id, reportTo, toAttend))
+                                              id => {
+                                                case Some(creator) => new StudentAgent(id, studentId, reportTo, creator, toAttend)
+                                              })
 
 
 
-  case class AssignMeToAGroup(implicit val sender: AgentRef) extends UUIDed with Message{
-    val tpe = "Assign me to a group"
-    val asString = ""
+  case class AssignMeToGroups(studentId: StudentId, disciplines: Seq[Discipline])
+                             (implicit val sender: AgentRef) extends UUIDed with Message
+  {
+    val tpe = "Assign me to groups"
+    val asString = disciplines.mkString(", ")
   }
 
+
+  case class AddedToGroup(discipline: Discipline, groupRef: NegotiatingAgentRef)
+                         (implicit val sender: AgentRef) extends UUIDed with Message
+  {
+    val tpe = "You've been added to group"
+    val asString = discipline.toString + " -- " + groupRef.toString
+  }
+
+  case class RemovedFromGroup(discipline: Discipline, groupRef: NegotiatingAgentRef)
+                             (implicit val sender: AgentRef) extends UUIDed with Message
+  {
+    val tpe = "You've been removed from group"
+    val asString = discipline.toString + " -- " + groupRef.toString
+  }
 }

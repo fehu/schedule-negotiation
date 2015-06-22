@@ -51,7 +51,7 @@ object TestApp extends App{
 
   def initNegCreators = CoordinatorAgent.InitialNegotiatorsCreators(
     students = students.map{
-      case (id, disciplines) => StudentAgent.creator(reportPrinter, disciplines map disciplineByCode)
+      case (id, disciplines) => StudentAgent.creator(reportPrinter, id, disciplines map disciplineByCode)
     },
     groups = Nil,
     professorsFullTime = mkProfessors(professorsFullTime, _.FullTime),
@@ -77,7 +77,8 @@ object TestApp extends App{
                         controller ! ControllerMessage.Begin()
 
                         val cntrl = ActorRefExtractor(controller).actorRef
-                        asys.scheduler.scheduleOnce(20 seconds span, cntrl, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(10 seconds span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(30 seconds span, cntrl, SystemMessage.Stop())(asys.dispatcher)
                       })
   )
 

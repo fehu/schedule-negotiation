@@ -61,7 +61,7 @@ class GroupAgent( val id                : NegotiatingAgentId
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = OneToOneNegotiationId(this.id, withAg.id)
 
   def start(): Unit = {
-    startSearchingProfessors()
+
   }
 
   def stop(): Unit = {
@@ -87,20 +87,30 @@ object GroupAgent{
       }
     )
 
-  case class AddStudent(studentRef: NegotiatingAgentRef)(implicit val sender: AgentRef) extends UUIDed with Message {
+  case class AddStudent(discipline: Discipline, studentId: StudentId, studentRef: NegotiatingAgentRef, nTry: Int = 0)
+                       (implicit val sender: AgentRef) extends UUIDed with Message
+  {
     val tpe = "Add student"
-    val asString = studentRef.toString
+    val asString = studentId.toString + ", try " + nTry
   }
 
-  case class RmStudent(studentRef: NegotiatingAgentRef)(implicit val sender: AgentRef) extends UUIDed with Message {
+  case class RmStudent(studentId: StudentId)(implicit val sender: AgentRef) extends UUIDed with Message {
     val tpe = "Remove student"
-    val asString = studentRef.toString
+    val asString = studentId.toString
   }
 
-  case class GroupIsFull(studentRef: NegotiatingAgentRef)(implicit val sender: AgentRef) extends UUIDed with Message {
+  case class GroupIsFull(discipline: Discipline, studentId: StudentId, studentRef: NegotiatingAgentRef, nTry: Int)
+                        (implicit val sender: AgentRef) extends UUIDed with Message
+  {
     val tpe = "I am full. Returning the student"
-    val asString = studentRef.toString
+    val asString = studentId.toString + ", try " + nTry
   }
+
+  case class StartSearchingProfessors(implicit val sender: AgentRef) extends UUIDed with Message{
+    val tpe = "Start Searching Professors"
+    val asString = ""
+  }
+
 }
 
 /** Creating new proposals and evaluating already existing
@@ -200,10 +210,12 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
   private var askedForExtraScope = false
 
   def handleNewNegotiations: PartialFunction[Message, Unit] = {
+    case GroupAgent.StartSearchingProfessors() => startSearchingProfessors()
     case msg: NegotiationProposition => sys.error("todo: recall")   // todo: recall
 
     case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       add _ $ mkNegotiationWith(msg.sender, discipline)
+      log.debug("mkNegotiationWith " + sender + " over " + discipline)
       modifyNewNegAcceptance(true, msg)
       checkResponsesForPartTime()
 
@@ -262,15 +274,19 @@ trait GroupAgentStudentsHandling{
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs =>
 
   def schedulePolicy: SchedulePolicy
+  def discipline    : Discipline
 
-  protected val students = mutable.HashSet.empty[NegotiatingAgentRef]
+  protected val students = mutable.HashMap.empty[StudentId, NegotiatingAgentRef]
 
   def handleStudents: PartialFunction[Message, Unit] = {
     case msg: GroupAgent.AddStudent if students.size >= schedulePolicy.maxStudentsInGroup =>
-      msg.sender ! GroupAgent.GroupIsFull(msg.studentRef)
-    case GroupAgent.AddStudent(studentRef) =>
-      students += studentRef
-    case GroupAgent.RmStudent(studentRef) =>
-      students -= studentRef
+      msg.sender ! GroupAgent.GroupIsFull(discipline, msg.studentId, msg.studentRef, msg.nTry)
+    case GroupAgent.AddStudent(d, studentId, studentRef, _) =>
+      assert(discipline == d)
+      students += studentId -> studentRef
+      studentRef ! StudentAgent.AddedToGroup(discipline, ref)
+    case GroupAgent.RmStudent(studentId) =>
+      val Some(sRef) = students.remove(studentId) // todo: handle error
+      sRef ! StudentAgent.RemovedFromGroup(discipline, ref)
   }
 }

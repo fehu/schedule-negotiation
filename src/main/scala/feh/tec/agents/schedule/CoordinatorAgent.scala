@@ -20,6 +20,7 @@ class CoordinatorAgent( val id              : SystemAgentId
   extends NegotiationController
   with NegotiationController.InitialAgents
   with NegotiationController.AgentsManipulation
+  with CoordinatorAgentStudentsHandling
   with Reporting
   with ActorLogging
 {
@@ -48,12 +49,17 @@ class CoordinatorAgent( val id              : SystemAgentId
     case _ => Nil
   }
 
-  def messageReceived = handleMessages
+  def messageReceived = handleMessages orElse handleStudents
+
+  protected var searching = false
 
   def handleMessages: PartialFunction[Message, Unit] = {
     case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) =>
       sender() ! negotiatorsByRole.getOrElse(ProfessorAgent.Role.PartTime, Nil).toSet
     case _: Messages.NoCounterpartFound => // todo
+    case GroupAgent.StartSearchingProfessors() =>
+      searching = true
+      groups.values.par.foreach(_ ! GroupAgent.StartSearchingProfessors())
   }
 
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}
@@ -68,25 +74,39 @@ trait CoordinatorAgentStudentsHandling{
 
   def timeouts: Timeouts
   def schedulePolicy: SchedulePolicy
+  protected def searching: Boolean
 
   protected val groups = mutable.HashMap.empty[(Discipline, StudentAgent.Career, Int), NegotiatingAgentRef]
 
-  protected def newGroup(discipline: Discipline)=
-    mkNegotiators(GroupAgent.creator(reportTo, discipline, timeouts, schedulePolicy))
+  protected def newGroup(discipline: Discipline, career: StudentAgent.Career, counter: Int) = {
+    val group = mkNegotiators(GroupAgent.creator(reportTo, discipline, timeouts, schedulePolicy)).head._2.head
+    groups += (discipline, career, counter) -> group
+    group ! SystemMessage.Start()
+    initializeNegotiator(group)
+    if(searching) group ! GroupAgent.StartSearchingProfessors()
+    group
+  }
 
   def getGroups(discipline: Discipline, career: StudentAgent.Career) = groups.collect{
     case ((`discipline`, `career`, _), group) => group
   }.toList
 
   def getGroupsNonEmpty(discipline: Discipline, career: StudentAgent.Career) = getGroups(discipline, career) match {
-    case Nil => newGroup(discipline)
+    case Nil => newGroup(discipline, career, 0) :: Nil
     case list => list
   }
 
   def handleStudents: PartialFunction[Message, Unit] = {
-    case msg@StudentAgent.AssignMeToAGroup() =>
+    case msg@StudentAgent.AssignMeToGroups(studentId, disciplines) =>
       assert(msg.sender.id.role == StudentAgent.Role, "sent not by a student: " + msg)
-      ???
+      for{
+        d <- disciplines
+        groups = getGroupsNonEmpty(d, msg.studentId.career)
+      } groups.head ! GroupAgent.AddStudent(d, studentId, msg.sender.asInstanceOf[NegotiatingAgentRef])
+    case GroupAgent.GroupIsFull(discipline, studentId, studentRef, nTry) =>
+      val groups = getGroupsNonEmpty(discipline, studentId.career)
+      if(groups.size <= nTry+1) groups(nTry+1) // todo
+      else newGroup(discipline, studentId.career, groups.size)
   }
 }
 
