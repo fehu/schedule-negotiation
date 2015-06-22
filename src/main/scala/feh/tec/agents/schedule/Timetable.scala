@@ -53,7 +53,7 @@ class MutableTimetable(implicit timeDescr: Time.Descriptor)
 {
   protected val timeTable: Map[DayOfWeek, Array[Option[ClassId]]] = DaysOfWeek.values.toSeq.map{
     day => day -> Array.fill[Option[ClassId]](timeDescr.n+1)(None)
-  }.toSeq.toMap
+  }.toMap
 
 
   def asMap: Map[DayOfWeek, Map[Time, Option[ClassId]]] = timeTable.mapValues{

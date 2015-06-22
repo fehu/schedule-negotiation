@@ -73,7 +73,10 @@ class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duratio
 
 
   def stop(): Unit = {
+    loggers.foreach(context stop _._2)
     dbConnection.connection.close()
+    this.asInstanceOf[ActorLogging].log.debug("Stopped")
+    context stop self
   }
 }
 
@@ -95,6 +98,7 @@ object ReportDistributedMongoLogger{
     def write(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
                                        , "sender"      -> t.sender.id.name
                                        , "sender-role" -> t.sender.id.role.toString
+                                       , "type"        -> t.tpe
                                        , "report"      -> format(t)
                                        , "time"        -> System.nanoTime()
                                        )

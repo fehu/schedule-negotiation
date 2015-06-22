@@ -3,6 +3,7 @@ package feh.tec.agents.schedule
 import java.util.UUID
 
 import akka.actor.{SupervisorStrategy, ActorLogging}
+import feh.tec.agents.comm.NegotiationController.AgentsManipulation
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{Reporting, SystemSupport}
 import feh.tec.agents.schedule.CommonAgentDefs.Timeouts
@@ -71,7 +72,7 @@ class CoordinatorAgent( val id              : SystemAgentId
 
 
 trait CoordinatorAgentStudentsHandling{
-  agent: NegotiationController with Reporting =>
+  agent: NegotiationController with Reporting with AgentsManipulation =>
 
 
   def timeouts: Timeouts
@@ -81,7 +82,7 @@ trait CoordinatorAgentStudentsHandling{
   protected val groups = mutable.HashMap.empty[(Discipline, StudentAgent.Career, Int), NegotiatingAgentRef]
 
   protected def newGroup(discipline: Discipline, career: StudentAgent.Career, counter: Int) = {
-    val group = mkNegotiators(GroupAgent.creator(reportTo, discipline, timeouts, schedulePolicy)).head._2.head
+    val group = newAgent(GroupAgent.creator(reportTo, discipline, timeouts, schedulePolicy))
     groups += (discipline, career, counter) -> group
     group ! SystemMessage.Start()
     initializeNegotiator(group)

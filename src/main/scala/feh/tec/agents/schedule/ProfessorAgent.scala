@@ -31,12 +31,19 @@ class ProfessorAgent( val id: NegotiatingAgentId
   lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
     new ClassesBasicPreferencesDeciderImplementations[Time] with ClassesBasicPreferencesAssessor[Time]{
       def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
-        tDescr.fromMinutesOpt(tDescr.toMinutes(at) + length).map{
+        val endTimeOpt = tDescr.fromMinutesOpt(tDescr.toMinutes(at) + length)
+        endTimeOpt.map{
           endTime =>
-            if(tDescr.ending > endTime || timetable.busyAt(onDay, at, endTime)) InUnitInterval(0)
+            if(timetable.busyAt(onDay, at, endTime)) {
+              log.debug("busy")
+              InUnitInterval(0)
+            }
             else InUnitInterval(1)
         }
-        .getOrElse(InUnitInterval(0))
+        .getOrElse({
+                     log.debug(s"at = $at, endTime = $endTimeOpt")
+                     InUnitInterval(0)
+                   })
       }
 
 
@@ -51,6 +58,7 @@ class ProfessorAgent( val id: NegotiatingAgentId
   def start(): Unit = {}
   def stop(): Unit = {
     reportTimetable()
+    context.stop(self)
   }
 
 
@@ -134,6 +142,7 @@ trait ProfessorAgentNegotiatingWithGroup{
                               val start = prop.time.asInstanceOf[Time]
                               val end = tDescr.fromMinutes(tDescr.toMinutes(start) + prop.length)
                               val clazz = ClassId(neg(NegVars.Discipline).code)
+                              log.debug("putClass")
                               timetable.putClass(prop.day, start, end, clazz)
 
                               neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
@@ -150,7 +159,7 @@ trait ProfessorAgentNegotiatingWithGroup{
     case (discipline, negotiations) =>
       val negIds = negotiations.map(_.id).toSeq
       val counterpartsCounts = counterpartsFoundByTheCounterpart.withFilter(negIds contains _._1).map(_._2.get).toSeq
-      log.debug("Professor: counterpartsCounts = " + counterpartsCounts)
+//      log.debug("Professor: counterpartsCounts = " + counterpartsCounts)
       assert(counterpartsCounts.distinct.size <= 1, "received different counterparts counts: " + counterpartsCounts)
       counterpartsCounts.headOption foreach{
         nProfs =>

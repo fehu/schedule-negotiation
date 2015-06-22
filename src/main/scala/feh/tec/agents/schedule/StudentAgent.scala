@@ -24,7 +24,10 @@ class StudentAgent( val id          : NegotiatingAgentId
   def messageReceived: PartialFunction[Message, Unit] = ???
 
   def start(): Unit = coordinator ! StudentAgent.AssignMeToGroups(studentId, toAttend)
-  def stop(): Unit = reportTimetable()
+  def stop(): Unit = {
+    reportTimetable()
+    context.stop(self)
+  }
 }
 
 object StudentAgent{

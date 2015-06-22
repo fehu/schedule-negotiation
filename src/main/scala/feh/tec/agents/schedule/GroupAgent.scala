@@ -47,12 +47,12 @@ class GroupAgent( val id                : NegotiatingAgentId
     handleNewNegotiations orElse handleMessage orElse handleStudents
 
   def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] = {
-    log.debug("askForExtraScope")
+//    log.debug("askForExtraScope")
     val res = Await.result(
       (coordinator ? CoordinatorAgent.ExtraScopeRequest(role)).mapTo[Set[NegotiatingAgentRef]],
       timeout.duration*1.1
     )
-    log.debug("extra scope: " + res)
+//    log.debug("extra scope: " + res)
     res
   }
 
@@ -66,6 +66,7 @@ class GroupAgent( val id                : NegotiatingAgentId
 
   def stop(): Unit = {
     reportTimetable()
+    context.stop(self)
   }
 }
 
@@ -178,6 +179,7 @@ trait GroupAgentNegotiating{
       val end = tDescr.fromMinutes(tDescr.toMinutes(start) + get(Vars.Length))
       val clazz = ClassId(neg(NegVars.Discipline).code)
       timetable.putClass(get(Vars.Day), start, end, clazz)
+      log.debug("putClass")
       noResponsesExpected(msg.negotiation)
     case msg => //sys.error("todo: handle " + msg)
   }
@@ -215,7 +217,7 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
 
     case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       add _ $ mkNegotiationWith(msg.sender, discipline)
-      log.debug("mkNegotiationWith " + sender + " over " + discipline)
+//      log.debug("mkNegotiationWith " + sender + " over " + discipline)
       modifyNewNegAcceptance(true, msg)
       checkResponsesForPartTime()
 
