@@ -6,3 +6,9 @@ var timetables = function(coll){ return coll.find( {type: "Timetable Report"} )
                                             .map(function(x){ return x.report } )
                                             .filter(function(x) {return x.length != 117 })
                                }
+
+colls = [db.groups, db.professors, db.students, db.controller]
+
+var foreach = function(f){ return colls.map(function(x){ return f(x) }) }
+
+foreach(function(x){ return x.distinct("type") })

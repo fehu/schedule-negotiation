@@ -175,7 +175,7 @@ trait GroupAgentNegotiating{
       log.debug("Acceptance")
       val neg = negotiation(msg.negotiation)
       val prop = neg(CurrentProposal).ensuring(_.uuid == msg.respondingTo)
-      def get[T] = getFromMsg(prop.asInstanceOf[ClassesProposalMessage], _: Var[T])
+      def get[T] = getFromMsg(prop.asInstanceOf[ClassesMessage], _: Var[T])
       val start = get(Vars.Time[Time])
       val end = tDescr.fromMinutes(tDescr.toMinutes(start) + get(Vars.Length))
       val clazz = ClassId(neg(NegVars.Discipline).code)

@@ -27,13 +27,20 @@ object Messages {
 
 
 
-  trait ClassesProposalMessage extends Message{
-    self: Proposals.ProposalMessage =>
-
+  trait ClassesMessage extends NegotiationMessage{
     val myValues: Map[Var[Any], Any]
   }
 
-  implicit def classesProposalHasValues = new HasValues[ClassesProposalMessage] {
+  trait ClassesProposalMessage[Time] extends ClassesMessage{
+    self: Proposals.ProposalMessage =>
+
+    def day: DayOfWeek
+    def time: Time
+    def length: Int
+    def extra: Map[Var[Any], Any]
+  }
+
+  implicit def classesProposalHasValues = new HasValues[ClassesMessage] {
     def values = _.myValues
   }
 
@@ -46,7 +53,7 @@ object Messages {
                                   , uuid: UUID                = UUID.randomUUID() )
                                   (implicit val sender: NegotiatingAgentRef)
     extends Proposals.Proposal
-    with ClassesProposalMessage
+    with ClassesProposalMessage[Time]
   {
     val myValues = extra +  ( Vars.Day        -> day
                             , Vars.Time[Time] -> time
@@ -60,7 +67,7 @@ object Messages {
                                     , uuid        : UUID               = UUID.randomUUID() )
                                   (implicit val sender: NegotiatingAgentRef)
     extends Proposals.Acceptance
-    with ClassesProposalMessage
+    with ClassesMessage
 
   case class ClassesRejection[Time]( negotiation : NegotiationId
                                      , respondingTo : UUID
@@ -68,7 +75,7 @@ object Messages {
                                      , uuid        : UUID               = UUID.randomUUID() )
                                    (implicit val sender: NegotiatingAgentRef)
     extends Proposals.Rejection
-    with ClassesProposalMessage
+    with ClassesMessage
 
   case class ClassesCounterProposal[Time] ( negotiation: NegotiationId
                                           , respondingTo: UUID
@@ -79,7 +86,7 @@ object Messages {
                                           , uuid: UUID                = UUID.randomUUID() )
                                         (implicit val sender: NegotiatingAgentRef)
     extends Proposals.CounterProposal
-    with ClassesProposalMessage
+    with ClassesProposalMessage[Time]
   {
     val myValues = extra +  ( Vars.Day        -> day
                             , Vars.Time[Time] -> time

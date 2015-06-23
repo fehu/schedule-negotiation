@@ -11,5 +11,8 @@
 
 - [ ] schedule labs
 - [ ] force stopping
+- [ ] report errors in logs
 - [ ] fix extra scope timeouts
-- [ ] handle CounterProposal for Professors
+- [x] handle CounterProposal for Professors
+- [ ] report "I have nothing to do anymore", "I've got something to do"
+- [ ] more information about classes in TimetableReport

@@ -118,7 +118,7 @@ trait ProfessorAgentNegotiatingWithGroup{
 
   // Main
   
-  protected def counterProposalOrRejection(prop: ClassesProposal[_], neg: Negotiation): ClassesProposalMessage = {
+  protected def counterProposalOrRejection(prop: ClassesProposalMessage[_], neg: Negotiation): ClassesMessage = {
     import classesAssessor._
     val d = classesAssessor.basedOn(lengthParam -> prop.length)
     val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
@@ -128,16 +128,16 @@ trait ProfessorAgentNegotiatingWithGroup{
   }
 
   def handleNegotiation: PartialFunction[Message, Unit] = {
-    case prop: ClassesProposal[_] =>
+    case prop: ClassesProposalMessage[Time] =>
       val neg = negotiation(prop.negotiation)
-      val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time.asInstanceOf[Time])
+      val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time)
 
 //      log.debug("proposal assessed: " + a)
 
       val resp = if(a > assessedThreshold(neg)) {
                               log.debug("Acceptance")
                               /*todo: use Confirm message*/
-                              val start = prop.time.asInstanceOf[Time]
+                              val start = prop.time
                               val end = tDescr.fromMinutes(tDescr.toMinutes(start) + prop.length)
                               val clazz = ClassId(neg(NegVars.Discipline).code)
                               log.debug("putClass")
@@ -146,7 +146,7 @@ trait ProfessorAgentNegotiatingWithGroup{
                                   counterProposalOrRejection(prop, neg)
                                 case _ =>
                                   neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
-                                  neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time.asInstanceOf[Time])
+                                  neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time)
                                   neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
                                   startSearchingForClassRoom(neg)
                                   ClassesAcceptance(neg.id, prop.uuid)
