@@ -91,6 +91,7 @@ object Messages {
     def isSevere = true
     val tpe = "No Counterpart Found"
     val asString = d.toString
+    def underlyingMessage = None
   }
   
   case class StartingNegotiation(discipline: Discipline, counterpart: NegotiatingAgentRef)
@@ -100,6 +101,7 @@ object Messages {
     def isSevere = false
     val tpe = "Starting Negotiation"
     val asString = s"over $discipline with $counterpart"
+    def underlyingMessage = None
   }
 
   case class TimetableReport(tt: ImmutableTimetable[Option[ClassId]])(implicit val sender: AgentRef)
@@ -128,5 +130,6 @@ object Messages {
 
       p.mkString
     }
+    def underlyingMessage = None
   }
 }

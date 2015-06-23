@@ -20,7 +20,7 @@ object TestApp extends App{
   lazy val profsCanTeach = ProfsCanTeach.read(
     / / "home" / "fehu" / "study" / "tec" / "agents" / "Thesis" / "data" / "schedule.xlsx",
     sheetName = "programacionGrupos"
-  )
+  ).mapValues(_.filter(_.classes != 0)) // todo: labs
 
   lazy val (professorsFullTime, professorsPartTime) = profsCanTeach.partition(_._1._2)
 
@@ -60,7 +60,8 @@ object TestApp extends App{
 
   def initNegCreators = CoordinatorAgent.InitialNegotiatorsCreators(
     students = students.map{
-      case (id, disciplines) => StudentAgent.creator(reportPrinter, id, disciplines map disciplineByCode)
+      case (id, disciplines) => StudentAgent.creator(reportPrinter, id, disciplines.flatMap(disciplineByCode.get)) //todo
+                                                                        //todo: flatmap is temporary, because labs are ignored for now
     },
     groups = Nil,
     professorsFullTime = mkProfessors(professorsFullTime, _.FullTime),
@@ -89,14 +90,14 @@ object TestApp extends App{
 
                         val cntrl = ActorRefExtractor(controller).actorRef
                         asys.scheduler.scheduleOnce(10 seconds span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(4 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(5 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(1 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(2 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
 
                       })
   )
 
-  Thread.sleep(5*60*1000)
+  Thread.sleep(2*60*1000)
   println("stopping")
-  asys.awaitTermination(1.minute)
+  asys.awaitTermination(5.minutes)
   sys.exit()
 }

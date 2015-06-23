@@ -70,8 +70,8 @@ class MutableTimetable(implicit timeDescr: Time.Descriptor)
                                                                         .toSeq.flatten
   
 
-  def putClass(day: DayOfWeek, from: Time, to: Time, clazz: ClassId): Unit = {
-    assert(!busyAt(day, from, to))
-    for(i <- from.discrete to to.discrete) timeTable(day)(i) = Option(clazz)
+  def putClass(day: DayOfWeek, from: Time, to: Time, clazz: ClassId): Either[IllegalArgumentException, Unit] = {
+    if(!busyAt(day, from, to))  Right(for(i <- from.discrete to to.discrete) timeTable(day)(i) = Option(clazz))
+    else Left(new IllegalArgumentException(s"busyAt($day, $from, $to)"))
   }
 }

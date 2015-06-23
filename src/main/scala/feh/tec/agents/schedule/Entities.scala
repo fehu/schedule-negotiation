@@ -61,6 +61,6 @@ trait TimeTableRead[Time]{
 }
 
 trait TimeTableWrite[Time]{
-  def putClass(day: DayOfWeek, from: Time, to: Time, clazz: ClassId)
+  def putClass(day: DayOfWeek, from: Time, to: Time, clazz: ClassId): Either[IllegalArgumentException, Unit]
 
 }

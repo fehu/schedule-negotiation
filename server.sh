@@ -1,3 +1,3 @@
 #!/bin/bash
 
-su -c "mongod --noauth --rest --httpinterface"
+su -c "mongod --noauth --rest --httpinterface --nojournal --cpu --noIndexBuildRetry"

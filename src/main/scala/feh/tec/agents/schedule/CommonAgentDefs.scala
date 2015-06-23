@@ -23,9 +23,10 @@ trait CommonAgentDefs extends AgentsTime{
 
   add(SharedNegotiation)
   
-  override lazy val Reporting = new ReportingNegotiationsConfig(messageReceived = true, messageSent = true)
+  override lazy val Reporting = new ReportingNegotiationsConfig(stateChanged = false)
 
-  protected def varUpdatedNotification(upd: VarUpdated[_ <: NegotiationVar]) = reportTo ! StateChanged(upd)
+  protected def varUpdatedNotification(upd: VarUpdated[_ <: NegotiationVar]) =
+    if(Reporting.stateChanged) reportTo ! StateChanged(upd)
 
 
 

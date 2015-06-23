@@ -1,5 +1,6 @@
 package feh.tec.agents.schedule
 
+import akka.actor.ActorLogging
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm._
@@ -16,15 +17,15 @@ class StudentAgent( val id          : NegotiatingAgentId
   with NegotiationReactionBuilder
   with CommonAgentDefs
   with DynamicNegotiations
+  with ActorLogging
 {
   protected def negotiationWithId(withAg: NegotiatingAgentRef): NegotiationId = OneToOneNegotiationId(this.id, withAg.id)
-
-  override lazy val Reporting = new ReportingNegotiationsConfig(messageSent = true, messageReceived = true)
 
   def messageReceived: PartialFunction[Message, Unit] = ???
 
   def start(): Unit = coordinator ! StudentAgent.AssignMeToGroups(studentId, toAttend)
   def stop(): Unit = {
+    log.debug("reportTimetable")
     reportTimetable()
     context.stop(self)
   }

@@ -65,6 +65,7 @@ class GroupAgent( val id                : NegotiatingAgentId
   }
 
   def stop(): Unit = {
+    log.debug("reportTimetable")
     reportTimetable()
     context.stop(self)
   }
@@ -178,9 +179,17 @@ trait GroupAgentNegotiating{
       val start = get(Vars.Time[Time])
       val end = tDescr.fromMinutes(tDescr.toMinutes(start) + get(Vars.Length))
       val clazz = ClassId(neg(NegVars.Discipline).code)
-      timetable.putClass(get(Vars.Day), start, end, clazz)
-      log.debug("putClass")
-      noResponsesExpected(msg.negotiation)
+      timetable.putClass(get(Vars.Day), start, end, clazz) match {
+        case Left(_) =>
+          val prop  = nextProposalFor(neg).asInstanceOf[ClassesProposal[Time]]
+          val cprop = ClassesCounterProposal(prop.negotiation, msg.uuid, prop.day, prop.time, prop.length, prop.extra)
+          counterpart(neg) ! cprop
+          neg.set(CurrentProposal)(cprop)
+          awaitResponseFor(cprop)
+        case _ =>
+          log.debug("putClass")
+          noResponsesExpected(msg.negotiation)
+      }
     case msg => //sys.error("todo: handle " + msg)
   }
 
@@ -217,7 +226,7 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
 
     case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       add _ $ mkNegotiationWith(msg.sender, discipline)
-//      log.debug("mkNegotiationWith " + sender + " over " + discipline)
+      log.debug("mkNegotiationWith " + sender + " over " + discipline)
       modifyNewNegAcceptance(true, msg)
       checkResponsesForPartTime()
 

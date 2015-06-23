@@ -31,19 +31,17 @@ class ProfessorAgent( val id: NegotiatingAgentId
   lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
     new ClassesBasicPreferencesDeciderImplementations[Time] with ClassesBasicPreferencesAssessor[Time]{
       def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
-        val endTimeOpt = tDescr.fromMinutesOpt(tDescr.toMinutes(at) + length)
+        val minutes = tDescr.toMinutes(at) + length
+        val endTimeOpt = tDescr.fromMinutesOpt(minutes)
         endTimeOpt.map{
           endTime =>
             if(timetable.busyAt(onDay, at, endTime)) {
-              log.debug("busy")
+//              log.debug("busy")
               InUnitInterval(0)
             }
             else InUnitInterval(1)
         }
-        .getOrElse({
-                     log.debug(s"at = $at, endTime = $endTimeOpt")
-                     InUnitInterval(0)
-                   })
+        .getOrElse(InUnitInterval(0))
       }
 
 
@@ -57,6 +55,7 @@ class ProfessorAgent( val id: NegotiatingAgentId
 
   def start(): Unit = {}
   def stop(): Unit = {
+    log.debug("reportTimetable")
     reportTimetable()
     context.stop(self)
   }
@@ -120,7 +119,6 @@ trait ProfessorAgentNegotiatingWithGroup{
   // Main
   
   protected def counterProposalOrRejection(prop: ClassesProposal[_], neg: Negotiation): ClassesProposalMessage = {
-    log.debug(s"counterProposalOrRejection for $prop in $neg")
     import classesAssessor._
     val d = classesAssessor.basedOn(lengthParam -> prop.length)
     val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
@@ -134,7 +132,7 @@ trait ProfessorAgentNegotiatingWithGroup{
       val neg = negotiation(prop.negotiation)
       val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time.asInstanceOf[Time])
 
-      log.debug("proposal assessed: " + a)
+//      log.debug("proposal assessed: " + a)
 
       val resp = if(a > assessedThreshold(neg)) {
                               log.debug("Acceptance")
@@ -143,13 +141,16 @@ trait ProfessorAgentNegotiatingWithGroup{
                               val end = tDescr.fromMinutes(tDescr.toMinutes(start) + prop.length)
                               val clazz = ClassId(neg(NegVars.Discipline).code)
                               log.debug("putClass")
-                              timetable.putClass(prop.day, start, end, clazz)
-
-                              neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
-                              neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time.asInstanceOf[Time])
-                              neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
-                              startSearchingForClassRoom(neg)
-                              ClassesAcceptance(neg.id, prop.uuid)
+                              timetable.putClass(prop.day, start, end, clazz) match {
+                                case Left(_) =>
+                                  counterProposalOrRejection(prop, neg)
+                                case _ =>
+                                  neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
+                                  neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time.asInstanceOf[Time])
+                                  neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
+                                  startSearchingForClassRoom(neg)
+                                  ClassesAcceptance(neg.id, prop.uuid)
+                              }
                             }
                  else counterProposalOrRejection(prop, neg)
       prop.sender ! resp

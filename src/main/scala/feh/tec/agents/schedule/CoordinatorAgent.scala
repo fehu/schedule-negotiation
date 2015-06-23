@@ -28,7 +28,7 @@ class CoordinatorAgent( val id              : SystemAgentId
 
   def stopped = false
 
-  val Reporting = new ReportingConfig(messageSent = true, messageReceived = true)
+  val Reporting = new ReportingConfig()
 
   /** A SystemMessage was sent message by an agent with not a SystemAgentId */
 //  protected def systemMessageFraud(fraud: SystemMessage) = assert(fraud.sender.id.isInstanceOf[UserAgentId], "fraud: " + fraud)
@@ -39,7 +39,10 @@ class CoordinatorAgent( val id              : SystemAgentId
 
   def systemMessageReceived: PartialFunction[SystemMessage, Unit] = {
     case _: SystemMessage.Start       => start()
-    case _: SystemMessage.Stop        => stop()
+    case _: SystemMessage.Stop        =>
+      log.debug("========================== SystemMessage.Stop ==========================")
+      stop()
+      context.stop(self)
     case _: SystemMessage.Initialize  => initialize()
     case _: ControllerMessage.Begin   => startNegotiation()
   }

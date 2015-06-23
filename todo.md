@@ -12,3 +12,4 @@
 - [ ] schedule labs
 - [ ] force stopping
 - [ ] fix extra scope timeouts
+- [ ] handle CounterProposal for Professors

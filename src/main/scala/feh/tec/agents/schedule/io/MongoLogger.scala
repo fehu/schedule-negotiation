@@ -1,6 +1,6 @@
 package feh.tec.agents.schedule.io
 
-import akka.actor.{ActorLogging, Props, ActorRefFactory, ActorRef}
+import akka.actor._
 import feh.tec.agents.comm._
 import feh.tec.agents.schedule.{ProfessorAgent, CoordinatorAgent, GroupAgent, StudentAgent}
 import reactivemongo.api._
@@ -24,6 +24,14 @@ protected[io] class MongoLogger(val id: SystemAgentId, collection: BSONCollectio
   def start() = {}
   def stop() = {}
 
+  def receive_ : Receive = {
+    case "stop" =>
+      sender() ! "stopped"
+      setStopped()
+    case _ if stopped =>
+  }
+
+  override def receive = receive_ orElse super.receive
 }
 
 
@@ -72,12 +80,27 @@ class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duratio
   }
 
 
-  def stop(): Unit = {
-    loggers.foreach(context stop _._2)
-    dbConnection.connection.close()
-    this.asInstanceOf[ActorLogging].log.debug("Stopped")
-    context stop self
+  def receive_ : Receive = {
+    case "stopped" =>
+      val r = sender()
+      loggers = loggers.filter(_._2 != r)
+      context.stop(r)
+      this.asInstanceOf[ActorLogging].log.debug("a logger stopped")
+
+      if(loggers.isEmpty){
+        this.asInstanceOf[ActorLogging].log.debug("closing connection")
+        dbConnection.connection.close()
+        this.asInstanceOf[ActorLogging].log.debug("Stopped")
+        context stop self
+      }
   }
+  override def receive = receive_ orElse super.receive
+
+  def stop(): Unit = {
+    loggers.foreach(_._2 ! "stop")
+  }
+
+  override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
 }
 
 object ReportDistributedMongoLogger{
@@ -99,8 +122,9 @@ object ReportDistributedMongoLogger{
                                        , "sender"      -> t.sender.id.name
                                        , "sender-role" -> t.sender.id.role.toString
                                        , "type"        -> t.tpe
-                                       , "report"      -> format(t)
+                                       , "report"      -> t.asString
                                        , "time"        -> System.nanoTime()
+                                       , "msg-type"    -> t.underlyingMessage.map(_.tpe).getOrElse("")
                                        )
   }
 }
