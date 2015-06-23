@@ -53,7 +53,7 @@ object TestApp extends App{
 
   lazy val loggingActors = ActorSystem("logs")
 
-  lazy val reportPrinter = ReportDistributedMongoLogger.creator(logDb, 2000.millis)(loggingActors.dispatcher, implicitly)
+  lazy val reportPrinter = ReportDistributedMongoLogger.creator(logDb, 2000.millis)(loggingActors.dispatcher, implicitly, AgentsTime.tDescr)
                                                        .create("the-logger")(loggingActors)
 
     //ReportDistributedPrinter.creator("logger", "logs").create("logger")

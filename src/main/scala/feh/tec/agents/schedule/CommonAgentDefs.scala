@@ -89,7 +89,11 @@ trait AgentsTime{
 
   type Time = feh.tec.agents.schedule.Time
 
-  implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
+  implicit def tDescr = AgentsTime.tDescr
 
   val timetable = new MutableTimetable
+}
+
+object AgentsTime{
+  implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
 }

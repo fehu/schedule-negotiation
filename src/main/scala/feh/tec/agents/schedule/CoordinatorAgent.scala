@@ -41,6 +41,7 @@ class CoordinatorAgent( val id              : SystemAgentId
     case _: SystemMessage.Start       => start()
     case _: SystemMessage.Stop        =>
       log.debug("========================== SystemMessage.Stop ==========================")
+      log.debug("negotiatorsByRole = " + negotiatorsByRole)
       stop()
       context.stop(self)
     case _: SystemMessage.Initialize  => initialize()

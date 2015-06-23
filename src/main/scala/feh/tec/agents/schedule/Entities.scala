@@ -45,6 +45,9 @@ trait TimeDescriptor[Time]{
   def ending: Time
 
   def plus(t1: Time, t2: Int): Time = fromMinutes(toMinutes(t1) + t2)
+
+  def humanReadable(t: Time): String
+  def hr(t: Time): String = humanReadable(t)
 }
 
 // todo: not every week ?

@@ -2,19 +2,21 @@ package feh.tec.agents.schedule.io
 
 import akka.actor._
 import feh.tec.agents.comm._
-import feh.tec.agents.schedule.{ProfessorAgent, CoordinatorAgent, GroupAgent, StudentAgent}
+import feh.tec.agents.schedule.Messages.TimetableReport
+import feh.tec.agents.schedule._
 import reactivemongo.api._
 import reactivemongo.api.collections.default.BSONCollection
-import reactivemongo.bson.{BSONDocument, BSONDocumentWriter}
+import reactivemongo.bson._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 
 protected[io] class MongoLogger(val id: SystemAgentId, collection: BSONCollection)
                                (implicit exContext: ExecutionContext,
-                                         format: ReportLogFormat) extends ReportLogger
+                                         format: ReportLogFormat,
+                                         tDesr: TimeDescriptor[Time]) extends ReportLogger
 {
-  implicit lazy val writer = ReportDistributedMongoLogger.reportDocumentWriter(format)
+  implicit lazy val writer = ReportDistributedMongoLogger.reportDocumentWriter(format, tDesr)
 
   def log(msg: Report): Unit = {
     collection.insert(msg).onFailure{ case thr: Throwable => throw thr }
@@ -37,7 +39,8 @@ protected[io] class MongoLogger(val id: SystemAgentId, collection: BSONCollectio
 
 class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duration)
                                   (implicit exContext: ExecutionContext,
-                                            format: ReportLogFormat) extends ReportLogger with ActorLogging
+                                            format: ReportLogFormat,
+                                            tDesr: TimeDescriptor[Time]) extends ReportLogger with ActorLogging
 {
 
   def log(msg: Report): Unit = loggers.collectFirst{
@@ -68,7 +71,9 @@ class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duratio
     this.asInstanceOf[ActorLogging].log.debug("loggers = " + loggers)
   }
 
-  private def mkLogger(filter: AgentRole => Boolean, collectionName: String)(implicit db: DefaultDB) = {
+  private def mkLogger(filter: AgentRole => Boolean, collectionName: String)
+                      (implicit db: DefaultDB, tDesr: TimeDescriptor[Time]) =
+  {
     val collection = db.collection[BSONCollection](collectionName)
     val fut = collection.create().map{
       case true =>
@@ -109,22 +114,54 @@ object ReportDistributedMongoLogger{
 
   protected [io] def newLogger(id: SystemAgentId, collection: BSONCollection)
                               (implicit afact: ActorRefFactory,
-                                        format: ReportLogFormat) =
-    afact.actorOf(Props(new MongoLogger(id, collection)(afact.dispatcher, implicitly)))
+                                        format: ReportLogFormat,
+                                        tDesr: TimeDescriptor[Time]) =
+    afact.actorOf(Props(new MongoLogger(id, collection)(afact.dispatcher, implicitly, implicitly)))
 
   def creator(connection: MongoConnection, timeout: Duration)
-             (implicit exContext: ExecutionContext, format: ReportLogFormat) =
+             (implicit exContext: ExecutionContext,
+                       format: ReportLogFormat,
+                       tDesr: TimeDescriptor[Time]) =
     AgentCreator(LoggerRole){_ => _ => new ReportDistributedMongoLogger(connection, timeout)}
 
 
-  def reportDocumentWriter(format: ReportLogFormat): BSONDocumentWriter[Report] = new BSONDocumentWriter[Report]{
-    def write(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
-                                       , "sender"      -> t.sender.id.name
-                                       , "sender-role" -> t.sender.id.role.toString
-                                       , "type"        -> t.tpe
-                                       , "report"      -> t.asString
-                                       , "time"        -> System.nanoTime()
-                                       , "msg-type"    -> t.underlyingMessage.map(_.tpe).getOrElse("")
-                                       )
+  implicit object BSONMapHandler extends BSONHandler[BSONDocument, Map[String, BSONValue]] {
+    def read(bson: BSONDocument): Map[String, BSONValue] = bson.elements.toMap
+    def write(t: Map[String, BSONValue]): BSONDocument = BSONDocument(t)
+  }
+
+  def reportDocumentWriter(format: ReportLogFormat, tDescr: TimeDescriptor[Time]): BSONDocumentWriter[Report] =
+    new BSONDocumentWriter[Report]{
+
+      def write(t: Report) = t match {
+        case tr: TimetableReport => writeTimeTable(tr)
+        case r => writeDefault(r)
+      }
+
+      def writeTimeTable(t: TimetableReport) = BSONDocument(
+                                                            t.tt.asMap.map{
+                                                               case (k, v) =>
+                                                                 val mp = v.collect{
+                                                                   case (time, Some(clazz)) =>
+                                                                     tDescr.hr(time) -> BSONString(clazz.uniqueId)
+                                                                 }
+                                                                 k.toString -> BSONMapHandler.write(mp)
+                                                             }.toSeq ++ Seq(
+                                                                "_id"  -> BSONString(t.uuid.toString)
+                                                              , "type" -> BSONString("Timetable Report")
+                                                              , "sender"      -> BSONString(t.sender.id.name)
+                                                              , "sender-role" -> BSONString(t.sender.id.role.toString)
+                                                              )
+                                                           )
+
+      def writeDefault(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
+                                                , "sender"      -> t.sender.id.name
+                                                , "sender-role" -> t.sender.id.role.toString
+                                                , "type"        -> t.tpe
+                                                , "report"      -> t.asString
+                                                , "time"        -> System.nanoTime()
+                                                , "msg-type"    -> t.underlyingMessage.map(_.tpe).getOrElse("")
+      )
+
   }
 }
