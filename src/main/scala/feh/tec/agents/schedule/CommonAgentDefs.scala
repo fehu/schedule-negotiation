@@ -1,5 +1,6 @@
 package feh.tec.agents.schedule
 
+import akka.actor.ActorLogging
 import akka.util.Timeout
 import feh.tec.agents.comm.Message.HasValues
 import feh.tec.agents.comm.Negotiation.VarUpdated
@@ -8,7 +9,8 @@ import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationEstablishingMessage, NegotiationProposition, NegotiationAcceptance, NegotiationRejection}
 import feh.tec.agents.comm.negotiations.Var
-import feh.tec.agents.schedule.Messages.TimetableReport
+import feh.tec.agents.schedule.CommonAgentDefs._
+import feh.tec.agents.schedule.Messages.{ClassesProposalMessage, TimetableReport}
 import feh.tec.agents.util.OneToOneNegotiation
 
 trait CommonAgentDefs extends AgentsTime{
@@ -32,12 +34,22 @@ trait CommonAgentDefs extends AgentsTime{
 
   protected def negotiationWithId(withAg: NegotiatingAgentRef): NegotiationId
 
-  protected def mkNegotiationWith(withAg: NegotiatingAgentRef, disc: Discipline): Negotiation =
+  type ThisId <: EntityId
+  def thisIdVar: NegotiationVar{ type T = ThisId }
+  def thisIdVal: ThisId
+
+  protected def mkNegotiationWith[Id]( withAg: NegotiatingAgentRef
+                                        , disc: Discipline
+                                        , thatIdVar: NegotiationVar{ type T = Id }
+                                        , thatIdVal: Id): Negotiation =
     new Negotiation(negotiationWithId(withAg), varUpdatedNotification) with ANegotiation[Time] {
       def discipline = disc
 
       set(NegVars.Discipline)(disc)
       set(OneToOneNegotiation.NegotiatingWith)(withAg)
+
+      set(thisIdVar)(thisIdVal)
+      set(thatIdVar)(thatIdVal)
     }
 
 
@@ -51,8 +63,8 @@ trait CommonAgentDefs extends AgentsTime{
     override val sender = snd
   }
 
-  def negotiationAcceptance(d: Discipline) = new NegotiationAcceptance {
-    val values: Map[Var[Any], Any] = Map(Vars.Discipline -> d)
+  def negotiationAcceptance(d: Discipline, id: EntityId) = new NegotiationAcceptance {
+    val values: Map[Var[Any], Any] = Map(Vars.Discipline -> d, Vars.EntityId -> id)
     override val sender: NegotiatingAgentRef = implicitly
   }
 
@@ -70,6 +82,18 @@ trait CommonAgentDefs extends AgentsTime{
   def getDecision[T](d: AbstractDecider#Decision[T]): T = d.value.right.map(throw _).merge
 
   def reportTimetable() = reportTo ! TimetableReport(ImmutableTimetable(timetable.asMap))
+
+  def putClass(prop: ClassesProposalMessage[Time]) = {
+    val neg = negotiation(prop.negotiation)
+    val start = prop.time
+    val end = tDescr.fromMinutes(tDescr.toMinutes(start) + prop.length)
+    val id = ClassId(neg(NegVars.Discipline).code)
+    val groupId = neg(NegVars.GroupId)
+    val profId =  neg(NegVars.ProfessorId)
+    val classId =  ClassRoomId.Unassigned
+    val clazz = Class(discipline(neg), prop.day, start, end, groupId, profId, classId)
+    timetable.put(prop.day, start, end, clazz)
+  }
 }
 
 object CommonAgentDefs{
@@ -91,7 +115,7 @@ trait AgentsTime{
 
   implicit def tDescr = AgentsTime.tDescr
 
-  val timetable = new MutableTimetable
+  val timetable = new MutableTimetable[Class[Time]]
 }
 
 object AgentsTime{

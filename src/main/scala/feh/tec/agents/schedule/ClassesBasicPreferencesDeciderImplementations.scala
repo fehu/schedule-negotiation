@@ -48,7 +48,7 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
 
     protected lazy val tdescr = implicitly[TimeDescriptor[Time]]
 
-    def timetable: TimeTableRead[Time]
+    def timetable: TimeTableRead[Time, Class[Time]]
 
 
     /** check that there is no class at given time
@@ -71,7 +71,7 @@ abstract class ClassesBasicPreferencesDeciderImplementations[Time: TimeDescripto
   class DecideRandom(params: Seq[AbstractDecider#Param[_]],
                      val lengthDiscr: Int,
                      val disciplineTotalLength: Int,
-                     val timetable: TimeTableRead[Time],
+                     val timetable: TimeTableRead[Time, Class[Time]],
                      log: LoggingAdapter  // todo
                       )
     extends AbstractDecideInterface(params)

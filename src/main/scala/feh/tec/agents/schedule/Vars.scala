@@ -18,6 +18,8 @@ object Vars{
   val Day     = Var[DayOfWeek]("Day of week")
   def Time[T] = Var[T]        ("Class beginning time")
   val Length  = Var[Int]      ("Class length in minutes")
+
+  val EntityId = Var[EntityId]("EntityId")
 }
 
 object NegVars{
@@ -26,4 +28,9 @@ object NegVars{
   object Discipline extends NegotiationVar{ type T = schedule.Discipline }
 
   object DisciplinePriority extends NegotiationVar{ type T = Float }
+
+//  object StudentId extends NegotiationVar{ type T = GroupId }
+  object GroupId     extends NegotiationVar{ type T = GroupId     }
+  object ProfessorId extends NegotiationVar{ type T = ProfessorId }
+  object ClassRoomId extends NegotiationVar{ type T = ClassRoomId }
 }

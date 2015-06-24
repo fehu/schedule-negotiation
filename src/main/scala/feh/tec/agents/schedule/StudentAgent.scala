@@ -9,7 +9,7 @@ import feh.tec.agents.util.OneToOneNegotiationId
 import feh.util.UUIDed
 
 class StudentAgent( val id          : NegotiatingAgentId
-                  , val studentId   : StudentId
+                  , val thisIdVal   : StudentId
                   , val reportTo    : SystemAgentRef
                   , val coordinator : AgentRef
                   , val toAttend    : Seq[Discipline])
@@ -19,11 +19,16 @@ class StudentAgent( val id          : NegotiatingAgentId
   with DynamicNegotiations
   with ActorLogging
 {
+  
+  
+  type ThisId = StudentId
+  def thisIdVar = ???
+
   protected def negotiationWithId(withAg: NegotiatingAgentRef): NegotiationId = OneToOneNegotiationId(this.id, withAg.id)
 
   def messageReceived: PartialFunction[Message, Unit] = ???
 
-  def start(): Unit = coordinator ! StudentAgent.AssignMeToGroups(studentId, toAttend)
+  def start(): Unit = coordinator ! StudentAgent.AssignMeToGroups(thisIdVal, toAttend)
   def stop(): Unit = {
     log.debug("reportTimetable")
     reportTimetable()

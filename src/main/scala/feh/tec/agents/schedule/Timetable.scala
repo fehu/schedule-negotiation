@@ -52,31 +52,31 @@ trait Timetable[T]{
 
 case class ImmutableTimetable[T](asMap: Map[DayOfWeek, Map[Time, T]]) extends Timetable[T]
 
-class MutableTimetable(implicit timeDescr: Time.Descriptor) 
-  extends Timetable[Option[ClassId]]
-  with TimetableAccess[Time]
+class MutableTimetable[T](implicit timeDescr: Time.Descriptor) 
+  extends Timetable[Option[T]]
+  with TimetableAccess[Time, T]
 {
-  protected val timeTable: Map[DayOfWeek, Array[Option[ClassId]]] = DaysOfWeek.values.toSeq.map{
-    day => day -> Array.fill[Option[ClassId]](timeDescr.n+1)(None)
+  protected val timeTable: Map[DayOfWeek, Array[Option[T]]] = DaysOfWeek.values.toSeq.map{
+    day => day -> Array.fill[Option[T]](timeDescr.n+1)(None)
   }.toMap
 
 
-  def asMap: Map[DayOfWeek, Map[Time, Option[ClassId]]] = timeTable.mapValues{
+  def asMap: Map[DayOfWeek, Map[Time, Option[T]]] = timeTable.mapValues{
     arr =>
       timeDescr.domain.zip(arr).toMap
     }
 
-  def allClasses: Seq[ClassId] = timeTable.flatMap(_._2.withFilter(_.isDefined).map(_.get)).toSeq
+  def all: Seq[T] = timeTable.flatMap(_._2.withFilter(_.isDefined).map(_.get)).toSeq
 
-  def classAt(day: DayOfWeek, time: Time): Option[ClassId] = timeTable(day)(time.discrete)
-  def classesAt(day: DayOfWeek, from: Time, to: Time): Seq[ClassId] = timeTable(day)
-                                                                        .drop(from.discrete)
-                                                                        .take(to.discrete - from.discrete)
-                                                                        .toSeq.flatten
+  def at(day: DayOfWeek, time: Time): Option[T] = timeTable(day)(time.discrete)
+  def at(day: DayOfWeek, from: Time, to: Time): Seq[T] = timeTable(day)
+                                                          .drop(from.discrete)
+                                                          .take(to.discrete - from.discrete)
+                                                          .toSeq.flatten
   
 
-  def putClass(day: DayOfWeek, from: Time, to: Time, clazz: ClassId): Either[IllegalArgumentException, Unit] = {
-    if(!busyAt(day, from, to))  Right(for(i <- from.discrete to to.discrete) timeTable(day)(i) = Option(clazz))
+  def put(day: DayOfWeek, from: Time, to: Time, t: T): Either[IllegalArgumentException, Unit] = {
+    if(!busyAt(day, from, to))  Right(for(i <- from.discrete to to.discrete) timeTable(day)(i) = Option(t))
     else Left(new IllegalArgumentException(s"busyAt($day, $from, $to)"))
   }
 }

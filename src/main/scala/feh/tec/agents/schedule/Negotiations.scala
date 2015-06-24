@@ -15,6 +15,9 @@ trait ANegotiation[Time] extends Negotiation
   defineVar(NegVars.Discipline)
   defineVar(NegVars.DisciplinePriority)
 
+  defineVar(NegVars.GroupId)
+  defineVar(NegVars.ProfessorId)
+
   forIssue(Vars.Day       , Nil)
   forIssue(Vars.Time[Time], Nil)
   forIssue(Vars.Length    , Nil)

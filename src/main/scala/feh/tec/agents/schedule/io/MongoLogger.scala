@@ -138,12 +138,20 @@ object ReportDistributedMongoLogger{
         case r => writeDefault(r)
       }
 
+      def writeClass(c: Class[_]) = BSONDocument(
+        "discipline"      -> c.discipline.name
+      , "discipline-code" -> c.discipline.code
+      , "group"     -> c.group.uniqueId
+      , "professor" -> c.professor.uniqueId
+      , "classroom" -> c.classroom.uniqueId
+      )
+
       def writeTimeTable(t: TimetableReport) = BSONDocument(
                                                             t.tt.asMap.map{
                                                                case (k, v) =>
                                                                  val mp = v.collect{
                                                                    case (time, Some(clazz)) =>
-                                                                     tDescr.hr(time) -> BSONString(clazz.uniqueId)
+                                                                     tDescr.hr(time) -> writeClass(clazz)
                                                                  }
                                                                  k.toString -> BSONMapHandler.write(mp)
                                                              }.toSeq ++ Seq(

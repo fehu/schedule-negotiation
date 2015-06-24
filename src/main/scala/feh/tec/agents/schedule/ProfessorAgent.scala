@@ -12,9 +12,10 @@ import feh.tec.agents.comm.negotiations.Establishing.{NegotiationProposition, Ne
 import scala.collection.mutable
 import CommonAgentDefs._
 
-class ProfessorAgent( val id: NegotiatingAgentId
-                    , val reportTo: SystemAgentRef
-                    , val canTeach: Discipline => Boolean
+class ProfessorAgent( val id        : NegotiatingAgentId
+                    , val thisIdVal : ProfessorId
+                    , val reportTo  : SystemAgentRef
+                    , val canTeach  : Discipline => Boolean
                       )
   extends NegotiatingAgent
   with NegotiationReactionBuilder
@@ -25,6 +26,9 @@ class ProfessorAgent( val id: NegotiatingAgentId
   with ActorLogging
   with AgentsTime
 {
+
+  type ThisId = ProfessorId
+  def thisIdVar: NegotiationVar {type T = ThisId} = NegVars.ProfessorId
 
   def messageReceived: PartialFunction[Message, Unit] = handleNegotiationPropositions orElse handleMessageFromGroups
 
@@ -71,12 +75,13 @@ object ProfessorAgent{
     lazy val PartTime = new NegotiationRole("Professor-part-time") with Role
   }
 
-  def creator( role: ProfessorAgent.Role.type => ProfessorAgent.Role
-             , reportTo: SystemAgentRef
-             , canTeach: Set[Discipline]
+  def creator( role       : ProfessorAgent.Role.type => ProfessorAgent.Role
+             , professorId: ProfessorId
+             , reportTo   : SystemAgentRef
+             , canTeach   : Set[Discipline]
              ) =
     new NegotiatingAgentCreator(role(Role), scala.reflect.classTag[ProfessorAgent],
-      id => _ => new ProfessorAgent(id, reportTo, canTeach)
+      id => _ => new ProfessorAgent(id, professorId, reportTo, canTeach)
     )
 }
 
@@ -137,14 +142,11 @@ trait ProfessorAgentNegotiatingWithGroup{
       val resp = if(a > assessedThreshold(neg)) {
                               log.debug("Acceptance")
                               /*todo: use Confirm message*/
-                              val start = prop.time
-                              val end = tDescr.fromMinutes(tDescr.toMinutes(start) + prop.length)
-                              val clazz = ClassId(neg(NegVars.Discipline).code)
-                              log.debug("putClass")
-                              timetable.putClass(prop.day, start, end, clazz) match {
+                               putClass(prop) match {
                                 case Left(_) =>
                                   counterProposalOrRejection(prop, neg)
                                 case _ =>
+                                  log.debug("putClass")
                                   neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
                                   neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time)
                                   neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
@@ -195,16 +197,17 @@ trait ProfessorAgentNegotiationPropositionsHandling
   def handleNegotiationPropositions: PartialFunction[Message, Unit] = {
     case msg: NegotiationProposition =>
       val disc = getFromMsg(msg, Vars.Discipline)
+      val id = getFromMsg(msg, Vars.EntityId).asInstanceOf[GroupId]
 //      val propOrRecall = getFromMsg(msg, Vars.PropOrRecall)
 
 //      if (propOrRecall == Vars.New)
 //      else recallRequested(msg)
-      msg.sender ! (if (canTeach(disc)) startNegotiationWith(msg.sender, disc) else negotiationRejection(disc))
+      msg.sender ! (if (canTeach(disc)) startNegotiationWith(msg.sender, disc, id) else negotiationRejection(disc))
   }
 
   /** creates a negotiation and guards it */
-  def startNegotiationWith(ag: NegotiatingAgentRef, disc: Discipline): NegotiationAcceptance = {
-    add _ $ mkNegotiationWith(ag, disc)
-    negotiationAcceptance(disc)
+  def startNegotiationWith(ag: NegotiatingAgentRef, disc: Discipline, id: GroupId): NegotiationAcceptance = {
+    add _ $ mkNegotiationWith(ag, disc, NegVars.GroupId, id)
+    negotiationAcceptance(disc, thisIdVal)
   }
 }

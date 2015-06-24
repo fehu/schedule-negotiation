@@ -111,7 +111,7 @@ object Messages {
     def underlyingMessage = None
   }
 
-  case class TimetableReport(tt: ImmutableTimetable[Option[ClassId]])(implicit val sender: AgentRef)
+  case class TimetableReport(tt: ImmutableTimetable[Option[Class[_]]])(implicit val sender: AgentRef)
     extends Report with PrintIndents
   {
     def isSevere = false

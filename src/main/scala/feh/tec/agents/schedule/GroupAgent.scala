@@ -12,7 +12,6 @@ import feh.tec.agents.comm.negotiations.Proposals.Vars.CurrentProposal
 import feh.tec.agents.comm.negotiations._
 import feh.tec.agents.schedule.CommonAgentDefs._
 import feh.tec.agents.schedule.Messages._
-import feh.tec.agents.schedule.io.StudentsSelection
 import feh.tec.agents.util.OneToOneNegotiationId
 import feh.util._
 
@@ -20,6 +19,7 @@ import scala.collection.mutable
 import scala.concurrent.Await
 
 class GroupAgent( val id                : NegotiatingAgentId
+                , val thisIdVal         : GroupId
                 , val coordinator       : AgentRef
                 , val reportTo          : SystemAgentRef
                 , val discipline        : Discipline
@@ -42,6 +42,10 @@ class GroupAgent( val id                : NegotiatingAgentId
       new DecideRandom(p, lengthDiscr = 60, getParam(disciplineParam, p).value.classes/*todo: labs*/, timetable, log)
   }
 
+
+
+  type ThisId = GroupId
+  def thisIdVar: NegotiationVar {type T = ThisId} = NegVars.GroupId
 
   def messageReceived: PartialFunction[Message, Unit] =
     handleNewNegotiations orElse handleMessage orElse handleStudents
@@ -78,6 +82,7 @@ object GroupAgent{
   object Role extends NegotiationRole("Group")
 
   def creator( reportTo           : SystemAgentRef
+             , groupId            : GroupId
              , discipline         : Discipline
              , timeouts           : Timeouts
              , schedulePolicy     : SchedulePolicy
@@ -85,7 +90,7 @@ object GroupAgent{
     new NegotiatingAgentCreator(Role, scala.reflect.classTag[GroupAgent],
       id => {
         case Some(coordinator) =>
-          new GroupAgent(id, coordinator, reportTo, discipline, initialStudents, timeouts, schedulePolicy)
+          new GroupAgent(id, groupId, coordinator, reportTo, discipline, initialStudents, timeouts, schedulePolicy)
       }
     )
 
@@ -174,12 +179,8 @@ trait GroupAgentNegotiating{
       /*todo: use Confirm message*/
       log.debug("Acceptance")
       val neg = negotiation(msg.negotiation)
-      val prop = neg(CurrentProposal).ensuring(_.uuid == msg.respondingTo)
-      def get[T] = getFromMsg(prop.asInstanceOf[ClassesMessage], _: Var[T])
-      val start = get(Vars.Time[Time])
-      val end = tDescr.fromMinutes(tDescr.toMinutes(start) + get(Vars.Length))
-      val clazz = ClassId(neg(NegVars.Discipline).code)
-      timetable.putClass(get(Vars.Day), start, end, clazz) match {
+      val prop = neg(CurrentProposal).ensuring(_.uuid == msg.respondingTo).asInstanceOf[ClassesProposalMessage[Time]]
+      putClass(prop) match {
         case Left(_) =>
           val prop  = nextProposalFor(neg).asInstanceOf[ClassesProposal[Time]]
           val cprop = ClassesCounterProposal(prop.negotiation, msg.uuid, prop.day, prop.time, prop.length, prop.extra)
@@ -187,7 +188,7 @@ trait GroupAgentNegotiating{
           neg.set(CurrentProposal)(cprop)
           awaitResponseFor(cprop)
         case _ =>
-          log.debug("putClass")
+          log.debug("putClass: group")
           noResponsesExpected(msg.negotiation)
       }
     case msg => //sys.error("todo: handle " + msg)
@@ -213,7 +214,7 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
   def searchProfessors(profRefs: Set[NegotiatingAgentRef] = professorRefs) = profRefs
     .map{
           profRef =>
-            profRef ! negotiationProposition(Vars.Discipline -> discipline)
+            profRef ! negotiationProposition(Vars.Discipline -> discipline, Vars.EntityId -> thisIdVal)
             profRef.id -> Option.empty[Boolean]
         }
     .toMap
@@ -225,7 +226,8 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
     case msg: NegotiationProposition => sys.error("todo: recall")   // todo: recall
 
     case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
-      add _ $ mkNegotiationWith(msg.sender, discipline)
+      val id = getFromMsg(msg, Vars.EntityId).asInstanceOf[ProfessorId]
+      add _ $ mkNegotiationWith(msg.sender, discipline, NegVars.ProfessorId, id)
       log.debug("mkNegotiationWith " + sender + " over " + discipline)
       modifyNewNegAcceptance(true, msg)
       checkResponsesForPartTime()

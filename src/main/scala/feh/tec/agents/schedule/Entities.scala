@@ -11,8 +11,7 @@ object DaysOfWeek extends Enumeration{
   val Mon, Tue, Wed, Thu, Sat, Sun = Value
 }
 
-case class Class[Time]( id        : ClassId,
-                        discipline: Discipline
+case class Class[Time]( discipline: Discipline
                       , dayOfWeek : DayOfWeek
                       , begins    : Time
                       , ends      : Time
@@ -21,16 +20,22 @@ case class Class[Time]( id        : ClassId,
                       , classroom : ClassRoomId
                         )
 
-//trait EntityId{
-//  def uniqueId: String
-//}
+trait EntityId{
+  def uniqueId: String
+}
 
-case class ClassId(uniqueId: String) //extends EntityId
+case class ClassId(uniqueId: String) extends EntityId
 
-case class StudentId  (tag: String, career: StudentAgent.Career)
-case class GroupId    (uniqueId: String) //extends EntityId
-case class ProfessorId(uniqueId: String) //extends EntityId
-case class ClassRoomId(uniqueId: String) //extends EntityId
+case class StudentId  (tag: String, career: StudentAgent.Career) extends EntityId{
+  def uniqueId = tag
+}
+case class GroupId    (uniqueId: String) extends EntityId
+case class ProfessorId(uniqueId: String) extends EntityId
+case class ClassRoomId(uniqueId: String) extends EntityId
+
+object ClassRoomId{
+  object Unassigned extends ClassRoomId("--")
+} 
 
 trait TimeDescriptor[Time]{
   def domain: Stream[Time]
@@ -51,19 +56,19 @@ trait TimeDescriptor[Time]{
 }
 
 // todo: not every week ?
-trait TimetableAccess[Time] extends TimeTableRead[Time] with TimeTableWrite[Time]
+trait TimetableAccess[Time, T] extends TimeTableRead[Time, T] with TimeTableWrite[Time, T]
 
-trait TimeTableRead[Time]{
-  def classAt(day: DayOfWeek, time: Time): Option[ClassId]
-  def classesAt(day: DayOfWeek, from: Time, to: Time): Seq[ClassId]
+trait TimeTableRead[Time, T]{
+  def at(day: DayOfWeek, time: Time): Option[T]
+  def at(day: DayOfWeek, from: Time, to: Time): Seq[T]
 
-  def allClasses: Seq[ClassId]
+  def all: Seq[T]
 
-  def busyAt(day: DayOfWeek, time: Time): Boolean = classAt(day, time).nonEmpty
-  def busyAt(day: DayOfWeek, from: Time, to: Time): Boolean = classesAt(day, from, to).nonEmpty
+  def busyAt(day: DayOfWeek, time: Time): Boolean = at(day, time).nonEmpty
+  def busyAt(day: DayOfWeek, from: Time, to: Time): Boolean = at(day, from, to).nonEmpty
 }
 
-trait TimeTableWrite[Time]{
-  def putClass(day: DayOfWeek, from: Time, to: Time, clazz: ClassId): Either[IllegalArgumentException, Unit]
+trait TimeTableWrite[Time, T]{
+  def put(day: DayOfWeek, from: Time, to: Time, clazz: T): Either[IllegalArgumentException, Unit]
 
 }

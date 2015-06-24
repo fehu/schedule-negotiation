@@ -86,7 +86,8 @@ trait CoordinatorAgentStudentsHandling{
   protected val groups = mutable.HashMap.empty[(Discipline, StudentAgent.Career, Int), NegotiatingAgentRef]
 
   protected def newGroup(discipline: Discipline, career: StudentAgent.Career, counter: Int) = {
-    val group = newAgent(GroupAgent.creator(reportTo, discipline, timeouts, schedulePolicy))
+    val grId = GroupId(UUID.randomUUID().toString)
+    val group = newAgent(GroupAgent.creator(reportTo, grId, discipline, timeouts, schedulePolicy))
     groups += (discipline, career, counter) -> group
     group ! SystemMessage.Start()
     initializeNegotiator(group)
