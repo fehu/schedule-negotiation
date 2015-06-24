@@ -90,14 +90,12 @@ object TestApp extends App{
 
                         val cntrl = ActorRefExtractor(controller).actorRef
                         asys.scheduler.scheduleOnce(10 seconds span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(2 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(3 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(1 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(90 seconds span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
 
                       })
   )
 
-  Thread.sleep(3*60*1000)
-  println("stopping")
   asys.awaitTermination(5.minutes)
   sys.exit()
 }

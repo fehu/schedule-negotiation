@@ -12,13 +12,13 @@
 - [ ] schedule labs
 - [ ] force stopping
 - [ ] report errors in logs
-- [ ] fix extra scope timeouts
+- [x] fix extra scope timeouts (self-fixed)
 - [x] handle CounterProposal for Professors
 - [ ] (notify finished) report "I have nothing to do anymore", "I've got something to do"
 - [x] more information about classes in TimetableReport
 
-- [ ] no reports from part-time professors
-- [ ] lack reports from some groups
+- [x] no reports from part-time professors
+- [x] lack reports from some groups
 
 - [ ] --- Student agents ---
 - [ ] groups must confirm classes assignations with underlying students

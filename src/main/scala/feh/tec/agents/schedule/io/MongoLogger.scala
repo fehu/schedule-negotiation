@@ -147,20 +147,21 @@ object ReportDistributedMongoLogger{
       )
 
       def writeTimeTable(t: TimetableReport) = BSONDocument(
-                                                            t.tt.asMap.map{
-                                                               case (k, v) =>
-                                                                 val mp = v.collect{
-                                                                   case (time, Some(clazz)) =>
-                                                                     tDescr.hr(time) -> writeClass(clazz)
-                                                                 }
-                                                                 k.toString -> BSONMapHandler.write(mp)
-                                                             }.toSeq ++ Seq(
-                                                                "_id"  -> BSONString(t.uuid.toString)
-                                                              , "type" -> BSONString("Timetable Report")
-                                                              , "sender"      -> BSONString(t.sender.id.name)
-                                                              , "sender-role" -> BSONString(t.sender.id.role.toString)
-                                                              )
-                                                           )
+                                              t.tt.asMap.map{
+                                                 case (k, v) =>
+                                                   val mp = v.collect{
+                                                     case (time, Some(clazz)) =>
+                                                       tDescr.hr(time) -> writeClass(clazz)
+                                                   }
+                                                   k.toString -> BSONMapHandler.write(mp)
+                                               }.toSeq ++ Seq(
+                                                  "_id"  -> BSONString(t.uuid.toString)
+                                                , "type" -> BSONString("Timetable")
+                                                , "sender"      -> BSONString(t.sender.id.name)
+                                                , "sender-role" -> BSONString(t.sender.id.role.toString)
+                                                , "isEmpty"     -> BSONBoolean(t.tt.asMap.forall(_._2.isEmpty))
+                                                )
+                                             )
 
       def writeDefault(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
                                                 , "sender"      -> t.sender.id.name
