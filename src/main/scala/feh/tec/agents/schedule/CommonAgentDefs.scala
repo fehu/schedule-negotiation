@@ -7,11 +7,13 @@ import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
+import feh.tec.agents.comm.agent.{Negotiating, NegotiationReactionBuilder}
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationEstablishingMessage, NegotiationProposition, NegotiationAcceptance, NegotiationRejection}
-import feh.tec.agents.comm.negotiations.Var
+import feh.tec.agents.comm.negotiations.{Issues, Var}
 import feh.tec.agents.schedule.CommonAgentDefs._
-import feh.tec.agents.schedule.Messages.{ClassesProposalMessage, TimetableReport}
+import feh.tec.agents.schedule.Messages._
 import feh.tec.agents.util.OneToOneNegotiation
+import feh.util.InUnitInterval
 
 trait CommonAgentDefs extends AgentsTime{
   agent: NegotiatingAgent with DynamicNegotiations =>
@@ -108,6 +110,13 @@ object CommonAgentDefs{
 
 }
 
+
+
+
+
+
+
+
 trait AgentsTime{
   agent: NegotiatingAgent =>
 
@@ -120,4 +129,82 @@ trait AgentsTime{
 
 object AgentsTime{
   implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
+}
+
+
+
+
+
+
+
+trait CommonAgentProposalAssessment extends NegotiatingAgent{
+  self: CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
+
+  def assessedThreshold(neg: Negotiation): Float
+
+  
+  lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
+    new ClassesBasicPreferencesDeciderImplementations[Time] with ClassesBasicPreferencesAssessor[Time]{
+      def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
+        val minutes = tDescr.toMinutes(at) + length
+        val endTimeOpt = tDescr.fromMinutesOpt(minutes)
+        endTimeOpt.map{
+                        endTime =>
+                          if(timetable.busyAt(onDay, at, endTime)) {
+                            //log.debug("busy")
+                            InUnitInterval(0)
+                          }
+                          else InUnitInterval(1)
+                      }
+        .getOrElse(InUnitInterval(0))
+      }
+
+
+      def basedOn(p: Param[_]*): AbstractDecideInterface =
+        new DecideRandom(p, lengthDiscr = 60, getParam(lengthParam, p).value, timetable, log)
+    }
+
+
+  protected def counterProposal(prop: ClassesProposalMessage[_], neg: Negotiation) = {
+    import classesAssessor._
+    val d = classesAssessor.basedOn(lengthParam -> prop.length)
+    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
+    val cprop = ClassesCounterProposal(neg.id, prop.uuid, getDecision(day), getDecision(time), getDecision(len))
+    awaitResponseFor(cprop)
+    cprop
+  }
+  
+  protected def acceptance(prop: ClassesProposalMessage[Time], neg: Negotiation) = {
+    neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
+    neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time)
+    neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
+    
+    ClassesAcceptance[Time](neg.id, prop.uuid)
+  }
+
+  type HandleClassesProposalMessageResult = Either[ClassesCounterProposal[Time], ClassesAcceptance[Time]]
+
+  protected def handleClassesProposalMessage( prop: ClassesProposalMessage[Time]
+                                            , neg_ : Negotiation = null): HandleClassesProposalMessageResult = {
+      val neg = Option(neg_) getOrElse negotiation(prop.negotiation)
+      val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time)
+
+      //      log.debug("proposal assessed: " + a)
+
+      if(a > assessedThreshold(neg)) {
+        log.debug("Acceptance")
+        /*todo: use Confirm message*/
+        putClass(prop) match {
+          case Left(_) =>
+            Left(counterProposal(prop, neg))
+          case _ =>
+            log.debug("putClass")
+            Right(acceptance(prop, neg))
+        }
+      }
+      else Left(counterProposal(prop, neg))
+
+
+  }
+
 }

@@ -29,7 +29,7 @@ object NegVars{
 
   object DisciplinePriority extends NegotiationVar{ type T = Float }
 
-//  object StudentId extends NegotiationVar{ type T = GroupId }
+  object StudentId   extends NegotiationVar{ type T = StudentId   }
   object GroupId     extends NegotiationVar{ type T = GroupId     }
   object ProfessorId extends NegotiationVar{ type T = ProfessorId }
   object ClassRoomId extends NegotiationVar{ type T = ClassRoomId }

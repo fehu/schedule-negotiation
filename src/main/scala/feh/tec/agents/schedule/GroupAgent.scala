@@ -69,7 +69,6 @@ class GroupAgent( val id                : NegotiatingAgentId
   }
 
   def stop(): Unit = {
-    log.debug("reportTimetable")
     reportTimetable()
     context.stop(self)
   }

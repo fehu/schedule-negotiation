@@ -32,34 +32,12 @@ class ProfessorAgent( val id        : NegotiatingAgentId
 
   def messageReceived: PartialFunction[Message, Unit] = handleNegotiationPropositions orElse handleMessageFromGroups
 
-  lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
-    new ClassesBasicPreferencesDeciderImplementations[Time] with ClassesBasicPreferencesAssessor[Time]{
-      def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
-        val minutes = tDescr.toMinutes(at) + length
-        val endTimeOpt = tDescr.fromMinutesOpt(minutes)
-        endTimeOpt.map{
-          endTime =>
-            if(timetable.busyAt(onDay, at, endTime)) {
-//              log.debug("busy")
-              InUnitInterval(0)
-            }
-            else InUnitInterval(1)
-        }
-        .getOrElse(InUnitInterval(0))
-      }
-
-
-      def basedOn(p: Param[_]*): AbstractDecideInterface =
-        new DecideRandom(p, lengthDiscr = 60, getParam(lengthParam, p).value, timetable, log)
-    }
-
   def assessedThreshold(neg: Negotiation): Float = 0.7f // todo
 
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = OneToOneNegotiationId(this.id, withAg.id)
 
   def start(): Unit = {}
   def stop(): Unit = {
-    log.debug("reportTimetable")
     reportTimetable()
     context.stop(self)
   }
@@ -91,12 +69,8 @@ trait ProfessorAgentNegotiatingForClassRoom{
   protected def startSearchingForClassRoom(groupNeg: Negotiation): Unit = {} //todo ???
 }
 
-trait ProfessorAgentNegotiatingWithGroup{
+trait ProfessorAgentNegotiatingWithGroup extends CommonAgentProposalAssessment{
   agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs with ActorLogging =>
-
-  def assessedThreshold(neg: Negotiation): Float
-
-  val classesAssessor: ClassesBasicPreferencesAssessor[Time]
 
   protected def startSearchingForClassRoom(groupNeg: Negotiation)
 
@@ -122,39 +96,16 @@ trait ProfessorAgentNegotiatingWithGroup{
 
 
   // Main
-  
-  protected def counterProposalOrRejection(prop: ClassesProposalMessage[_], neg: Negotiation): ClassesMessage = {
-    import classesAssessor._
-    val d = classesAssessor.basedOn(lengthParam -> prop.length)
-    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
-    val cprop = ClassesCounterProposal(neg.id, prop.uuid, getDecision(day), getDecision(time), getDecision(len))
-    awaitResponseFor(cprop)
-    cprop
-  }
 
   def handleNegotiation: PartialFunction[Message, Unit] = {
     case prop: ClassesProposalMessage[Time] =>
       val neg = negotiation(prop.negotiation)
-      val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time)
-
-//      log.debug("proposal assessed: " + a)
-
-      val resp = if(a > assessedThreshold(neg)) {
-                              log.debug("Acceptance")
-                              /*todo: use Confirm message*/
-                               putClass(prop) match {
-                                case Left(_) =>
-                                  counterProposalOrRejection(prop, neg)
-                                case _ =>
-                                  log.debug("putClass")
-                                  neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
-                                  neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time)
-                                  neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
-                                  startSearchingForClassRoom(neg)
-                                  ClassesAcceptance(neg.id, prop.uuid)
-                              }
-                            }
-                 else counterProposalOrRejection(prop, neg)
+      val resp = handleClassesProposalMessage(prop, neg) match {
+        case Left(counter) => counter
+        case Right(accept) =>
+          startSearchingForClassRoom(neg)
+          accept
+      }
       prop.sender ! resp
   }
 

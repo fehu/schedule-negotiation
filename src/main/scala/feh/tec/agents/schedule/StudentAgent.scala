@@ -22,7 +22,7 @@ class StudentAgent( val id          : NegotiatingAgentId
   
   
   type ThisId = StudentId
-  def thisIdVar = ???
+  def thisIdVar = NegVars.StudentId
 
   protected def negotiationWithId(withAg: NegotiatingAgentRef): NegotiationId = OneToOneNegotiationId(this.id, withAg.id)
 
@@ -30,7 +30,6 @@ class StudentAgent( val id          : NegotiatingAgentId
 
   def start(): Unit = coordinator ! StudentAgent.AssignMeToGroups(thisIdVal, toAttend)
   def stop(): Unit = {
-    log.debug("reportTimetable")
     reportTimetable()
     context.stop(self)
   }
