@@ -20,6 +20,7 @@ class ProfessorAgent( val id        : NegotiatingAgentId
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
+  with CommonAgentProposal.DefaultAssessor
   with ProfessorAgentNegotiationPropositionsHandling
   with ProfessorAgentNegotiatingWithGroup
   with ProfessorAgentNegotiatingForClassRoom

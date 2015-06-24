@@ -7,8 +7,8 @@ import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
-import feh.tec.agents.comm.agent.{Negotiating, NegotiationReactionBuilder}
-import feh.tec.agents.comm.negotiations.Establishing.{NegotiationEstablishingMessage, NegotiationProposition, NegotiationAcceptance, NegotiationRejection}
+import feh.tec.agents.comm.agent.NegotiationReactionBuilder
+import feh.tec.agents.comm.negotiations.Establishing.{NegotiationAcceptance, NegotiationEstablishingMessage, NegotiationProposition, NegotiationRejection}
 import feh.tec.agents.comm.negotiations.{Issues, Var}
 import feh.tec.agents.schedule.CommonAgentDefs._
 import feh.tec.agents.schedule.Messages._
@@ -135,34 +135,39 @@ object AgentsTime{
 
 
 
+/** Creating new proposals
+  *
+  */
 
+trait CommonAgentProposalsGeneration extends NegotiatingAgent{
+  agent: CommonAgentDefs =>
+
+  val classesDecider: ClassesBasicPreferencesDecider[Time]
+
+  def nextProposalFor(neg: Negotiation): ClassesProposal[Time] = {
+    import classesDecider._
+
+
+    val d = basedOn(lengthParam -> neg(NegVars.Discipline).classes)
+
+    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
+
+    ClassesProposal(neg.id, getDecision(day), getDecision(time), getDecision(len))
+  }
+
+}
+
+
+/** Evaluating existing proposals
+  *
+  */
 
 trait CommonAgentProposalAssessment extends NegotiatingAgent{
-  self: CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
+  agent: CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
 
   def assessedThreshold(neg: Negotiation): Float
 
-  
-  lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
-    new ClassesBasicPreferencesDeciderImplementations[Time] with ClassesBasicPreferencesAssessor[Time]{
-      def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
-        val minutes = tDescr.toMinutes(at) + length
-        val endTimeOpt = tDescr.fromMinutesOpt(minutes)
-        endTimeOpt.map{
-                        endTime =>
-                          if(timetable.busyAt(onDay, at, endTime)) {
-                            //log.debug("busy")
-                            InUnitInterval(0)
-                          }
-                          else InUnitInterval(1)
-                      }
-        .getOrElse(InUnitInterval(0))
-      }
-
-
-      def basedOn(p: Param[_]*): AbstractDecideInterface =
-        new DecideRandom(p, lengthDiscr = 60, getParam(lengthParam, p).value, timetable, log)
-    }
+  val classesAssessor: ClassesBasicPreferencesAssessor[Time]
 
 
   protected def counterProposal(prop: ClassesProposalMessage[_], neg: Negotiation) = {
@@ -204,6 +209,47 @@ trait CommonAgentProposalAssessment extends NegotiatingAgent{
       }
       else Left(counterProposal(prop, neg))
 
+
+  }
+
+}
+
+object CommonAgentProposal{
+
+  protected trait DefaultDeciderImpl {
+    agent: CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
+
+    class DeciderImpl extends ClassesBasicPreferencesDeciderImplementations[Time]{
+      def basedOn(p: Param[_]*): AbstractDecideInterface =
+        new DecideRandom(p, lengthDiscr = 60, getParam(lengthParam, p).value /*todo: labs*/, timetable, log)
+    }
+  }
+
+  trait DefaultDecider extends DefaultDeciderImpl{
+    agent: CommonAgentProposalsGeneration with CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
+
+    lazy val classesDecider = new DeciderImpl
+  }
+
+  trait DefaultAssessor extends DefaultDeciderImpl{
+    agent: CommonAgentProposalAssessment with CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
+
+    lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
+      new DeciderImpl with ClassesBasicPreferencesAssessor[Time]{
+        def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
+          val minutes = tDescr.toMinutes(at) + length
+          val endTimeOpt = tDescr.fromMinutesOpt(minutes)
+          endTimeOpt.map{
+                          endTime =>
+                            if(timetable.busyAt(onDay, at, endTime)) {
+                              //log.debug("busy")
+                              InUnitInterval(0)
+                            }
+                            else InUnitInterval(1)
+                        }
+          .getOrElse(InUnitInterval(0))
+        }
+      }
 
   }
 

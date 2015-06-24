@@ -30,19 +30,14 @@ class GroupAgent( val id                : NegotiatingAgentId
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
+  with CommonAgentProposalsGeneration
+  with CommonAgentProposal.DefaultDecider
   with GroupAgentNegotiationPropositionsHandling
   with GroupAgentNegotiating
-  with GroupAgentProposals
   with GroupAgentStudentsHandling
   with ActorLogging
   with AgentsTime
 {
-  val classesDecider = new ClassesBasicPreferencesDeciderImplementations[Time]{
-    def basedOn(p: Param[_]*): AbstractDecideInterface =
-      new DecideRandom(p, lengthDiscr = 60, getParam(disciplineParam, p).value.classes/*todo: labs*/, timetable, log)
-  }
-
-
 
   type ThisId = GroupId
   def thisIdVar: NegotiationVar {type T = ThisId} = NegVars.GroupId
@@ -117,25 +112,6 @@ object GroupAgent{
     val asString = ""
   }
 
-}
-
-/** Creating new proposals and evaluating already existing
- *
- */
-trait GroupAgentProposals{
-  self: NegotiatingAgent with CommonAgentDefs =>
-
-  val classesDecider: ClassesBasicPreferencesDecider[Time]
-
-  def nextProposalFor(neg: Negotiation): ClassesProposal[Time] = {
-    import classesDecider._
-
-    val d = basedOn(disciplineParam -> neg(NegVars.Discipline))
-
-    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
-
-    ClassesProposal(neg.id, getDecision(day), getDecision(time), getDecision(len))
-  }
 }
 
 trait GroupAgentNegotiating{
