@@ -46,7 +46,7 @@ class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duratio
 
   def log(msg: Report): Unit = loggers.collectFirst{
     case (filter, logger) if filter(msg.sender.id.role) => logger forward msg
-  }.getOrElse(this.asInstanceOf[ActorLogging].log.debug(s"no logger found for $msg in $loggers"))
+  }.getOrElse(this.asInstanceOf[ActorLogging].log.debug(s"no logger found for ${msg.by.id} in $loggers"))
 
   val id = ReportDistributedMongoLogger.Id
 

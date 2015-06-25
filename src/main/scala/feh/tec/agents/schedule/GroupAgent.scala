@@ -119,7 +119,11 @@ object GroupAgent{
 }
 
 trait GroupAgentNegotiating{
-  agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs with ActorLogging =>
+  agent: NegotiatingAgent
+    with NegotiationReactionBuilder
+    with CommonAgentDefs
+    with CommonAgentProposalAssessment
+    with ActorLogging =>
 
   def handleMessage = handleNegotiationStart orElse handleNegotiation
 
@@ -156,14 +160,14 @@ trait GroupAgentNegotiating{
   def handleNegotiation: PartialFunction[Message, Unit] = {
     case (msg: ClassesAcceptance[_]) suchThat AwaitingResponse() =>
       /*todo: use Confirm message*/
-      log.debug("Acceptance")
+//      log.debug("Acceptance")
       val neg = negotiation(msg.negotiation)
-      val prop = neg(CurrentProposal).ensuring(_.uuid == msg.respondingTo).asInstanceOf[ClassesProposalMessage[Time]]
+      val prop = neg(CurrentProposal).asInstanceOf[ClassesProposalMessage[Time]]
 
 //      val reject_? = isBusyAt(discipline(neg), prop.length, prop.day, prop.time).getOrElse(true)
 
 //      if(reject_?) ???
-//      else
+//      else todo: ask students first
 
       putClass(prop) match {
         case Left(_) =>
@@ -173,11 +177,12 @@ trait GroupAgentNegotiating{
           neg.set(CurrentProposal)(cprop)
           awaitResponseFor(cprop)
         case _ =>
-          log.debug("putClass: group")
           noResponsesExpected(msg.negotiation)
       }
-//    case msg => //sys.error("todo: handle " + msg)
-//    case CounterProposal, ?? Acceptance
+    case (msg: ClassesCounterProposal[Time]) suchThat AwaitingResponse() & WithNegotiation(neg) =>
+      val resp = handleClassesProposalMessage(msg)
+      counterpart(neg) ! resp.merge
+    case (msg: ClassesMessage) suchThat NotAwaitingResponse() => // do nothing
   }
 
 }

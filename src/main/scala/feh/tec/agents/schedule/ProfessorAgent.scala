@@ -107,6 +107,8 @@ trait ProfessorAgentNegotiatingWithGroup extends CommonAgentProposalAssessment{
           accept
       }
       prop.sender ! resp
+    case (msg: ClassesMessage) suchThat NotAwaitingResponse() => // do nothing
+//    case (acc: ClassesAcceptance[Time]) => // todo
   }
 
   private def respondWithDisciplinePriorities() = negotiationsByDiscipline foreach {

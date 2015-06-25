@@ -1,6 +1,6 @@
 var listByName = function(coll, name, ord){ return coll.find({sender: name}).sort({"time": ord}).map(function(x){ return x.report } ) }
 
-var getTimetable = function(coll, name){ return coll.find({sender: name, type: "Timetable Report"}).map(function(x){ return x.report } ) }
+var getTimetable = function(coll, name){ return coll.find({sender: name, type: "Timetable"}).map(function(x){ return x.report } ) }
 
 
 

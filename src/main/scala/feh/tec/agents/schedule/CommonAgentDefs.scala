@@ -93,13 +93,17 @@ trait CommonAgentDefs extends AgentsTime{
   def putClass(prop: ClassesProposalMessage[Time]) = {
     val neg = negotiation(prop.negotiation)
     val start = prop.time
-    val end = tDescr.fromMinutes(tDescr.toMinutes(start) + prop.length)
-    val id = ClassId(neg(NegVars.Discipline).code)
-    val groupId = neg(NegVars.GroupId)
-    val profId =  neg(NegVars.ProfessorId)
-    val classId =  ClassRoomId.Unassigned
-    val clazz = Class(discipline(neg), prop.day, start, end, groupId, profId, classId)
-    timetable.put(prop.day, start, end, clazz)
+    val endT = tDescr.toMinutes(start) + prop.length
+    tDescr.fromMinutesOpt(endT).map{
+      end =>
+        val id = ClassId(neg(NegVars.Discipline).code)
+        val groupId = neg(NegVars.GroupId)
+        val profId =  neg(NegVars.ProfessorId)
+        val classId =  ClassRoomId.Unassigned
+        val clazz = Class(discipline(neg), prop.day, start, end, groupId, profId, classId)
+        timetable.put(prop.day, start, end, clazz)
+    }.getOrElse(Left(new IllegalArgumentException(s"`end` is out of range: $endT")))
+
   }
 }
 
@@ -194,6 +198,8 @@ trait CommonAgentProposalAssessment extends NegotiatingAgent{
 
   type HandleClassesProposalMessageResult = Either[ClassesCounterProposal[Time], ClassesAcceptance[Time]]
 
+  /** Assesses the proposal and guards it in the timetable if it passes.
+   */
   protected def handleClassesProposalMessage( prop: ClassesProposalMessage[Time]
                                             , neg_ : Negotiation = null): HandleClassesProposalMessageResult = {
       val neg = Option(neg_) getOrElse negotiation(prop.negotiation)
@@ -202,14 +208,11 @@ trait CommonAgentProposalAssessment extends NegotiatingAgent{
       //      log.debug("proposal assessed: " + a)
 
       if(a > assessedThreshold(neg)) {
-        log.debug("Acceptance")
+//        log.debug("Acceptance")
         /*todo: use Confirm message*/
         putClass(prop) match {
-          case Left(_) =>
-            Left(counterProposal(prop, neg))
-          case _ =>
-            log.debug("putClass")
-            Right(acceptance(prop, neg))
+          case Left(_) => Left(counterProposal(prop, neg))
+          case _       => Right(acceptance(prop, neg))
         }
       }
       else Left(counterProposal(prop, neg))
