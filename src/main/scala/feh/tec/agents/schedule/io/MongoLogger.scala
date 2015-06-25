@@ -8,6 +8,7 @@ import reactivemongo.api._
 import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.bson._
 
+import scala.collection.immutable.TreeMap
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 
@@ -146,22 +147,25 @@ object ReportDistributedMongoLogger{
       , "classroom" -> c.classroom.uniqueId
       )
 
-      def writeTimeTable(t: TimetableReport) = BSONDocument(
-                                              t.tt.asMap.map{
-                                                 case (k, v) =>
-                                                   val mp = v.collect{
-                                                     case (time, Some(clazz)) =>
-                                                       tDescr.hr(time) -> writeClass(clazz)
-                                                   }
-                                                   k.toString -> BSONMapHandler.write(mp)
-                                               }.toSeq ++ Seq(
-                                                  "_id"  -> BSONString(t.uuid.toString)
-                                                , "type" -> BSONString("Timetable")
-                                                , "sender"      -> BSONString(t.sender.id.name)
-                                                , "sender-role" -> BSONString(t.sender.id.role.toString)
-                                                , "isEmpty"     -> BSONBoolean(t.tt.asMap.forall(_._2.isEmpty))
-                                                )
-                                             )
+      def writeTimeTable(t: TimetableReport) = {
+        val mp = t.tt.asMap.mapValues(_.collect{case (time, Some(clazz)) => time -> clazz})
+        BSONDocument(
+          mp.toSeq.sortBy(_._1).map{
+             case (k, v) =>
+               val mp = v.toSeq.sortBy(_._1.discrete).map{
+                 case (time, clazz) =>
+                   tDescr.hr(time) -> writeClass(clazz)
+               }
+               k.toString -> BSONMapHandler.write(TreeMap(mp: _*))
+           } ++ Seq(
+            "_id"  -> BSONString(t.uuid.toString)
+            , "type" -> BSONString("Timetable")
+            , "sender"      -> BSONString(t.sender.id.name)
+            , "sender-role" -> BSONString(t.sender.id.role.toString)
+            , "isEmpty"     -> BSONBoolean(mp.forall(_._2.isEmpty))
+          )
+        )
+      }
 
       def writeDefault(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
                                                 , "sender"      -> t.sender.id.name

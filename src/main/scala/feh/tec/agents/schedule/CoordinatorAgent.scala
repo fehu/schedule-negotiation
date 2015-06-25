@@ -113,7 +113,7 @@ trait CoordinatorAgentStudentsHandling{
       } groups.head ! GroupAgent.AddStudent(d, studentId, msg.sender.asInstanceOf[NegotiatingAgentRef])
     case GroupAgent.GroupIsFull(discipline, studentId, studentRef, nTry) =>
       val groups = getGroupsNonEmpty(discipline, studentId.career)
-      if(groups.size <= nTry+1) groups(nTry+1) // todo
+      if(groups.size < nTry+1) groups(nTry+1)
       else newGroup(discipline, studentId.career, groups.size)
   }
 }

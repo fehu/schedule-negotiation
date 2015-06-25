@@ -1,7 +1,5 @@
 package feh.tec.agents.schedule
 
-import java.util.UUID
-
 import akka.actor.ActorLogging
 import akka.util.Timeout
 import feh.tec.agents.comm.NegotiationVar.Scope
@@ -31,7 +29,8 @@ class GroupAgent( val id                : NegotiatingAgentId
   with NegotiationReactionBuilder
   with CommonAgentDefs
   with CommonAgentProposalsGeneration
-  with CommonAgentProposal.DefaultDecider
+  with CommonAgentProposalAssessment
+  with CommonAgentProposal.DefaultAssessor
   with GroupAgentNegotiationPropositionsHandling
   with GroupAgentNegotiating
   with GroupAgentStudentsHandling
@@ -40,7 +39,12 @@ class GroupAgent( val id                : NegotiatingAgentId
 {
 
   type ThisId = GroupId
-  def thisIdVar: NegotiationVar {type T = ThisId} = NegVars.GroupId
+  def thisIdVar = NegVars.GroupId
+
+
+
+  val classesDecider = classesAssessor
+  def assessedThreshold(neg: Negotiation) = 0.7f // todo
 
   def messageReceived: PartialFunction[Message, Unit] =
     handleNewNegotiations orElse handleMessage orElse handleStudents
@@ -155,6 +159,12 @@ trait GroupAgentNegotiating{
       log.debug("Acceptance")
       val neg = negotiation(msg.negotiation)
       val prop = neg(CurrentProposal).ensuring(_.uuid == msg.respondingTo).asInstanceOf[ClassesProposalMessage[Time]]
+
+//      val reject_? = isBusyAt(discipline(neg), prop.length, prop.day, prop.time).getOrElse(true)
+
+//      if(reject_?) ???
+//      else
+
       putClass(prop) match {
         case Left(_) =>
           val prop  = nextProposalFor(neg).asInstanceOf[ClassesProposal[Time]]
@@ -166,7 +176,8 @@ trait GroupAgentNegotiating{
           log.debug("putClass: group")
           noResponsesExpected(msg.negotiation)
       }
-    case msg => //sys.error("todo: handle " + msg)
+//    case msg => //sys.error("todo: handle " + msg)
+//    case CounterProposal, ?? Acceptance
   }
 
 }

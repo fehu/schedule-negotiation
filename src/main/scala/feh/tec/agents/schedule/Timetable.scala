@@ -34,7 +34,7 @@ object Time{
 
     def humanReadable(t: Time) = {
       val m = toMinutes(t)
-      s"${m / 60}:${m % 60}"
+      (m / 60) + (":%02d" format m % 60)
     }
   }
   

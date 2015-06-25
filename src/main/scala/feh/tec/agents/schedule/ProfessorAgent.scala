@@ -50,7 +50,6 @@ object ProfessorAgent{
   sealed trait Role extends NegotiationRole
   object Role{
     lazy val FullTime = new NegotiationRole("Professor-full-time") with Role
-//    lazy val FullTime = new NegotiationRole("Professor: full-time") with Role
     lazy val PartTime = new NegotiationRole("Professor-part-time") with Role
   }
 

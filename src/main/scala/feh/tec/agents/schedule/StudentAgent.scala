@@ -26,7 +26,7 @@ class StudentAgent( val id          : NegotiatingAgentId
 
   protected def negotiationWithId(withAg: NegotiatingAgentRef): NegotiationId = OneToOneNegotiationId(this.id, withAg.id)
 
-  def messageReceived: PartialFunction[Message, Unit] = ???
+  def messageReceived: PartialFunction[Message, Unit] = Map()
 
   def start(): Unit = coordinator ! StudentAgent.AssignMeToGroups(thisIdVal, toAttend)
   def stop(): Unit = {

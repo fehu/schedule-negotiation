@@ -54,6 +54,11 @@ trait CommonAgentDefs extends AgentsTime{
       set(thatIdVar)(thatIdVal)
     }
 
+  def isBusyAt(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time) = {
+    val minutes = tDescr.toMinutes(at) + length
+    tDescr.fromMinutesOpt(minutes).map{ endTime => timetable.busyAt(onDay, at, endTime)}
+  }
+
 
   def negotiationProposition(vals: (Var[Any], Any)*) = new NegotiationProposition{
     val values = vals.toMap
@@ -236,19 +241,8 @@ object CommonAgentProposal{
 
     lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
       new DeciderImpl with ClassesBasicPreferencesAssessor[Time]{
-        def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval ={
-          val minutes = tDescr.toMinutes(at) + length
-          val endTimeOpt = tDescr.fromMinutesOpt(minutes)
-          endTimeOpt.map{
-                          endTime =>
-                            if(timetable.busyAt(onDay, at, endTime)) {
-                              //log.debug("busy")
-                              InUnitInterval(0)
-                            }
-                            else InUnitInterval(1)
-                        }
-          .getOrElse(InUnitInterval(0))
-        }
+        def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval =
+          InUnitInterval(if(isBusyAt(discipline, length, onDay, at) contains false) 1 else 0)
       }
 
   }
