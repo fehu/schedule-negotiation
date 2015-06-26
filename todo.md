@@ -17,7 +17,7 @@
 - [ ] schedule labs
 - [ ] force stopping
 - [ ] report errors in logs
-- [x] fix extra scope timeouts (self-fixed)
+- [ ] fix extra scope timeouts (see on laptop)
 - [x] handle CounterProposal for Professors
 - [ ] (notify finished) report "I have nothing to do anymore", "I've got something to do"
 - [x] more information about classes in TimetableReport
@@ -25,6 +25,9 @@
 
 - [x] no reports from part-time professors
 - [x] lack reports from some groups
+
+
+- [ ] Agents need utility function, that should drive them towards achieving goal (and stopping when it is achieved)
 
 
 - [ ] --- Student agents ---
