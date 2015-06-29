@@ -27,7 +27,7 @@
 - [x] lack reports from some groups
 
 
-- [ ] Agents need utility function, that should drive them towards achieving goal (and stopping when it is achieved)
+- [ ] Agents need utility function, that should drive them towards achieving goal (and stop when it is achieved)
 
 
 - [ ] --- Student agents ---
