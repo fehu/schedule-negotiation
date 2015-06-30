@@ -52,11 +52,11 @@ class GroupAgent( val id                : NegotiatingAgentId
   def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] = {
 //    log.debug("askForExtraScope")
     val res = Await.result(
-      (coordinator ? CoordinatorAgent.ExtraScopeRequest(role)).mapTo[Set[NegotiatingAgentRef]],
+      (coordinator ? CoordinatorAgent.ExtraScopeRequest(role)).mapTo[List[NegotiatingAgentRef]],
       timeout.duration*1.1
     )
 //    log.debug("extra scope: " + res)
-    res
+    res.toSet
   }
 
   def extraScopeTimeout = timeouts.extraScopeTimeout
@@ -219,7 +219,7 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
     case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       val id = getFromMsg(msg, Vars.EntityId).asInstanceOf[ProfessorId]
       add _ $ mkNegotiationWith(msg.sender, discipline, NegVars.ProfessorId, id)
-      log.debug("mkNegotiationWith " + sender + " over " + discipline)
+//      log.debug("mkNegotiationWith " + sender + " over " + discipline)
       modifyNewNegAcceptance(true, msg)
       checkResponsesForPartTime()
 

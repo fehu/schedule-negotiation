@@ -2,7 +2,7 @@ package feh.tec.agents.schedule
 
 import java.util.UUID
 
-import akka.actor.{SupervisorStrategy, ActorLogging}
+import akka.actor.{OneForOneStrategy, SupervisorStrategy, ActorLogging}
 import feh.tec.agents.comm.NegotiationController.AgentsManipulation
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{Reporting, SystemSupport}
@@ -62,7 +62,7 @@ class CoordinatorAgent( val id              : SystemAgentId
 
   def handleMessages: PartialFunction[Message, Unit] = {
     case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) =>
-      sender() ! negotiatorsByRole.getOrElse(ProfessorAgent.Role.PartTime, Nil).toSet
+      sender() ! negotiatorsByRole.getOrElse(ProfessorAgent.Role.PartTime, Nil)
     case _: Messages.NoCounterpartFound => // todo
     case GroupAgent.StartSearchingProfessors() =>
       searching = true
@@ -71,7 +71,12 @@ class CoordinatorAgent( val id              : SystemAgentId
 
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}
 
-  override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
+  override def supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 0){
+                                                                           case ex: Exception =>
+                                                                             log.debug("actor failed: " + ex) // todo: to reporter
+                                                                             // todo: remove the failed agent
+                                                                             SupervisorStrategy.Stop
+                                                                         }
 }
 
 

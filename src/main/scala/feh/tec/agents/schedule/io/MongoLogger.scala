@@ -158,7 +158,7 @@ object ReportDistributedMongoLogger{
                }
                k.toString -> BSONMapHandler.write(TreeMap(mp: _*))
            } ++ Seq(
-            "_id"  -> BSONString(t.uuid.toString)
+              "_id"  -> BSONString(t.uuid.toString)
             , "type" -> BSONString("Timetable")
             , "sender"      -> BSONString(t.sender.id.name)
             , "sender-role" -> BSONString(t.sender.id.role.toString)
