@@ -219,7 +219,7 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
     case (msg: NegotiationAcceptance) /*suchThat AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       val id = getFromMsg(msg, Vars.EntityId).asInstanceOf[ProfessorId]
       add _ $ mkNegotiationWith(msg.sender, discipline, NegVars.ProfessorId, id)
-//      log.debug("mkNegotiationWith " + sender + " over " + discipline)
+      log.debug("mkNegotiationWith " + msg.sender.id.name + " over " + discipline)
       modifyNewNegAcceptance(true, msg)
       checkResponsesForPartTime()
 
