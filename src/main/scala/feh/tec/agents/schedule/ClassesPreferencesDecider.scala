@@ -1,6 +1,8 @@
 package feh.tec.agents.schedule
 
 
+import feh.tec.agents.comm.negotiations.Proposals.Proposal
+
 import scala.language.implicitConversions
 import feh.util.InUnitInterval
 
@@ -32,6 +34,34 @@ trait AbstractDecider{
 
 }
 
+trait AbstractDeciderUtility{
+  self: AbstractDecider =>
+
+  trait DecideInterfaceExtended extends DecideInterface{
+
+    def goal(assumption: Option[Proposal]): InUnitInterval
+
+    def deltaGoal(assumption: Proposal): Double = goal(None) - goal(Some(assumption))
+
+    def preference(proposal: Proposal): InUnitInterval
+
+    def breaksConstraints_?(proposal: Proposal): Boolean
+
+    def priority(proposal: Proposal): Double
+
+    def priorityWeight: Double
+
+    // todo: time
+    def utility(proposal: Proposal) =
+      if(breaksConstraints_?(proposal)) 0d
+      else deltaGoal(proposal) match {
+        case 0 => 0d // todo ??
+        case delta => delta * (priority(proposal) * priorityWeight + preference(proposal))
+      }
+  }
+
+}
+
 object AbstractDecider{
   
   trait DecideInterfaceDecideImpl {
@@ -54,7 +84,7 @@ object AbstractDecider{
         val bd = decide_(b, Seq( (a -> ad).asInstanceOf[(DecisionDescriptor[Any], Decision[Any])] ))
         val cd = decide_(c, Seq(
           (a -> ad).asInstanceOf[(DecisionDescriptor[Any], Decision[Any])]
-          , (b -> bd).asInstanceOf[(DecisionDescriptor[Any], Decision[Any])]
+        , (b -> bd).asInstanceOf[(DecisionDescriptor[Any], Decision[Any])]
         ))
         (ad, bd, cd)
       }
@@ -63,7 +93,7 @@ object AbstractDecider{
   }
 }
 
-trait AbstractAssessor
+//trait AbstractAssessor
 
 trait ClassesBasicPreferencesDecider[Time] extends AbstractDecider{
 
@@ -87,9 +117,10 @@ trait ClassesBasicPreferencesAssessor[Time] extends ClassesBasicPreferencesDecid
 }
 
 
-trait TimeAwareDecider  extends AbstractDecider {  def timeElapsed: Long  }
-trait TimeAwareAssessor extends AbstractAssessor{  def timeElapsed: Long  }
+//trait TimeAwareDecider  extends AbstractDecider {  def timeElapsed: Long  }
+//trait TimeAwareAssessor extends AbstractAssessor{  def timeElapsed: Long  }
 
+/*
 trait CounterDecider {
   self: AbstractDecider =>
 
@@ -97,4 +128,5 @@ trait CounterDecider {
 
   def counterPropose[R](prop: Proposal)(f: => R): R
 }
+*/
 
