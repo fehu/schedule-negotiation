@@ -32,12 +32,14 @@ trait AgentUnconditionalPreferences{
 }
 
 
-trait AgentUtility extends AgentGoal with AgentPreferences{
+trait AgentUtility extends AgentGoal with AgentPreferences with AgentUnconditionalPreferences{
   agent: NegotiatingAgent =>
 
   def satisfiesConstraints(proposal: NegotiationProposal): Boolean
 
-  protected def deltaGoal(before: GoalHolder, after: GoalHolder): InUnitInterval
+  protected def goal(gh: GoalHolder): InUnitInterval
+
+  protected def deltaGoal(before: GoalHolder, after: GoalHolder) = goal(before) - goal(after)
 
   protected def assumeProposal(gh: GoalHolder, proposal: NegotiationProposal): GoalHolder
 
@@ -45,7 +47,10 @@ trait AgentUtility extends AgentGoal with AgentPreferences{
 
   def utility(time: NegotiationTime, gh: GoalHolder, proposal: NegotiationProposal) =
     if(satisfiesConstraints(proposal))
-      deltaGoal(gh, assumeProposal(gh, proposal)) * (weightedPriority(proposal) + preference(time, gh, proposal))
+      deltaGoal(gh, assumeProposal(gh, proposal)) match {
+        case 0 => 0d
+        case d => d * (weightedPriority(proposal) + preference(time, gh, proposal))
+      }
     else 0d
 
 }

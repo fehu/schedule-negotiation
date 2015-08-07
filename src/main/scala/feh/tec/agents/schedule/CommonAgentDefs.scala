@@ -90,21 +90,22 @@ trait CommonAgentDefs extends AgentsTime{
 
   def reportTimetable() = reportTo ! TimetableReport(ImmutableTimetable(timetable.asMap))
 
-  def putClass(prop: ClassesProposalMessage[Time]) = {
+  def putClassIn(prop: ClassesProposalMessage[Time], tt: MutableTimetable[Class[Time]]) = {
     val neg = negotiation(prop.negotiation)
     val start = prop.time
     val endT = tDescr.toMinutes(start) + prop.length
     tDescr.fromMinutesOpt(endT).map{
-      end =>
-        val id = ClassId(neg(NegVars.Discipline).code)
-        val groupId = neg(NegVars.GroupId)
-        val profId =  neg(NegVars.ProfessorId)
-        val classId =  ClassRoomId.Unassigned
-        val clazz = Class(discipline(neg), prop.day, start, end, groupId, profId, classId)
-        timetable.put(prop.day, start, end, clazz)
-    }.getOrElse(Left(new IllegalArgumentException(s"`end` is out of range: $endT")))
-
+                                     end =>
+                                       val id = ClassId(neg(NegVars.Discipline).code)
+                                       val groupId = neg(NegVars.GroupId)
+                                       val profId =  neg(NegVars.ProfessorId)
+                                       val classId =  ClassRoomId.Unassigned
+                                       val clazz = Class(discipline(neg), prop.day, start, end, groupId, profId, classId)
+                                       tt.put(prop.day, start, end, clazz)
+                                   }.getOrElse(Left(new IllegalArgumentException(s"`end` is out of range: $endT")))
   }
+
+  def putClass(prop: ClassesProposalMessage[Time]) = putClassIn(prop, timetable)
 }
 
 object CommonAgentDefs{
