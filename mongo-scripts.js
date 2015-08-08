@@ -19,3 +19,8 @@ _.find({type: "Timetable", "isEmpty": false})
 
 foreach(function(x){ return x.count({type: "Timetable", isEmpty: false}) })
 foreach(function(x){ return x.find( {type: "Timetable", isEmpty: false}) })[0]
+
+
+####################
+
+db.controller.find({type: "Error"}, {_id: false, type: false, overseer: false})

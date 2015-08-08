@@ -73,8 +73,10 @@ class CoordinatorAgent( val id              : SystemAgentId
 
   override def supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 0){
                                                                            case ex: Exception =>
-                                                                             log.debug("actor failed: " + ex) // todo: to reporter
-                                                                             // todo: remove the failed agent
+                                                                             val id = searchNegotiator(sender()).get.id
+                                                                             log.debug(id + " failed: " + ex)
+                                                                             reportTo ! Report.Error(id, ex)
+                                                                             delAgent(id)
                                                                              SupervisorStrategy.Stop
                                                                          }
 }

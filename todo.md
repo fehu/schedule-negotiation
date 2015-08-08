@@ -16,7 +16,7 @@
 
 - [ ] schedule labs
 - [ ] force stopping
-- [ ] report errors in logs
+- [x] report errors in logs
 - [x] fix extra scope timeouts
 - [x] handle CounterProposal for Professors
 - [ ] (notify finished) report "I have nothing to do anymore", "I've got something to do"

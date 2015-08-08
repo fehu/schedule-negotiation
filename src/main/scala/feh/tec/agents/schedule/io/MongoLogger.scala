@@ -131,11 +131,12 @@ object ReportDistributedMongoLogger{
     def write(t: Map[String, BSONValue]): BSONDocument = BSONDocument(t)
   }
 
-  def reportDocumentWriter(format: ReportLogFormat, tDescr: TimeDescriptor[Time]): BSONDocumentWriter[Report] =
+  def reportDocumentWriter(/*todo: not used*/format: ReportLogFormat, tDescr: TimeDescriptor[Time]): BSONDocumentWriter[Report] =
     new BSONDocumentWriter[Report]{
 
       def write(t: Report) = t match {
         case tr: TimetableReport => writeTimeTable(tr)
+        case err: Report.Error   => writeError(err)
         case r => writeDefault(r)
       }
 
@@ -166,6 +167,16 @@ object ReportDistributedMongoLogger{
           )
         )
       }
+
+      def writeError(t: Report.Error) = BSONDocument( "_id"       -> t.uuid.toString
+                                                    , "type"      -> t.tpe
+                                                    , "overseer"  -> t.sender.id.name
+                                                    , "time"      -> System.nanoTime()
+                                                    , "name"      -> t.agent.name
+                                                    , "role"      -> t.agent.role.role
+                                                    , "error"     -> t.err.getMessage
+                                                    , "cause"     -> Option(t.err.getCause).map(_.getMessage)
+      )
 
       def writeDefault(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
                                                 , "sender"      -> t.sender.id.name
