@@ -1,8 +1,6 @@
 package feh.tec.agents.schedule
 
 
-import feh.tec.agents.comm.negotiations.Proposals.Proposal
-
 import scala.language.implicitConversions
 import feh.util.InUnitInterval
 
@@ -31,34 +29,6 @@ trait AbstractDecider{
   }
 
   def basedOn(p: Param[_]*): DecideInterface
-
-}
-
-trait AbstractDeciderUtility{
-  self: AbstractDecider =>
-
-  trait DecideInterfaceExtended extends DecideInterface{
-
-    def goal(assumption: Option[Proposal]): InUnitInterval
-
-    def deltaGoal(assumption: Proposal): Double = goal(None) - goal(Some(assumption))
-
-    def preference(proposal: Proposal): InUnitInterval
-
-    def breaksConstraints_?(proposal: Proposal): Boolean
-
-    def priority(proposal: Proposal): Double
-
-    def priorityWeight: Double
-
-    // todo: time
-    def utility(proposal: Proposal) =
-      if(breaksConstraints_?(proposal)) 0d
-      else deltaGoal(proposal) match {
-        case 0 => 0d // todo ??
-        case delta => delta * (priority(proposal) * priorityWeight + preference(proposal))
-      }
-  }
 
 }
 
