@@ -18,7 +18,9 @@ trait AgentPreferences extends AgentGoal{
 
   type NegotiationTime
 
-  def preference(time: NegotiationTime, gh: GoalHolder, proposal: NegotiationProposal): InUnitInterval
+  type ProposalType <: NegotiationProposal
+
+  def preference(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType): InUnitInterval
 
 }
 
@@ -32,20 +34,18 @@ trait AgentUnconditionalPreferences{
 }
 
 
-trait AgentUtility extends AgentGoal with AgentPreferences with AgentUnconditionalPreferences{
+trait AgentUtility extends AgentGoal with AgentPreferences{
   agent: NegotiatingAgent =>
 
-  def satisfiesConstraints(proposal: NegotiationProposal): Boolean
+  def satisfiesConstraints(proposal: ProposalType): Boolean
 
-  protected def goal(gh: GoalHolder): InUnitInterval
+  protected def deltaGoal(before: GoalHolder, after: GoalHolder) = goalAchievement(before) - goalAchievement(after)
 
-  protected def deltaGoal(before: GoalHolder, after: GoalHolder) = goal(before) - goal(after)
+  protected def assumeProposal(gh: GoalHolder, proposal: ProposalType): GoalHolder
 
-  protected def assumeProposal(gh: GoalHolder, proposal: NegotiationProposal): GoalHolder
+  protected def weightedPriority(proposal: ProposalType): Double
 
-  protected def weightedPriority(proposal: NegotiationProposal): Double
-
-  def utility(time: NegotiationTime, gh: GoalHolder, proposal: NegotiationProposal) =
+  def utility(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType) =
     if(satisfiesConstraints(proposal))
       deltaGoal(gh, assumeProposal(gh, proposal)) match {
         case 0 => 0d
@@ -64,10 +64,10 @@ trait UtilityDrivenAgent extends AgentUtility{
 
   def utilityAcceptanceThreshold: Double
 
-  protected def acceptProposal(prop: NegotiationProposal)
-  protected def rejectProposal(prop: NegotiationProposal)
+  protected def acceptProposal(prop: ProposalType)
+  protected def rejectProposal(prop: ProposalType)
 
-  def utilityDrivenProposalHandling(prop: NegotiationProposal) =
+  def utilityDrivenProposalHandling(prop: ProposalType) =
     utility(negotiationTime, currentGoalHolder, prop) match {
       case accept if accept >= utilityAcceptanceThreshold => acceptProposal(prop)
       case _                                              => rejectProposal(prop)

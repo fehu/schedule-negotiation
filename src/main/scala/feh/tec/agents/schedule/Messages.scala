@@ -3,6 +3,7 @@ package feh.tec.agents.schedule
 import java.util.UUID
 
 import feh.tec.agents.comm.Message.HasValues
+import feh.tec.agents.comm.negotiations.Proposals.NegotiationProposal
 import feh.tec.agents.comm.negotiations.{Var, Proposals}
 import feh.tec.agents.comm._
 import feh.util.PrintIndents
@@ -31,7 +32,7 @@ object Messages {
     val myValues: Map[Var[Any], Any]
   }
 
-  trait ClassesProposalMessage[Time] extends ClassesMessage{
+  trait ClassesProposalMessage[Time] extends ClassesMessage with NegotiationProposal{
     self: Proposals.ProposalMessage =>
 
     def day: DayOfWeek

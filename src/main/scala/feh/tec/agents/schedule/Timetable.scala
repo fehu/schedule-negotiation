@@ -18,6 +18,8 @@ object Time{
   def descriptor(mBegin: Int, mEnd: Int, mStep: Int): Descriptor = new Descriptor{
     lazy val n = divEnsuringIntegerResult(mEnd - mBegin, mStep)
 
+    def step = mStep
+
     def beginning = Time(0)
     def ending    = Time(n)
 

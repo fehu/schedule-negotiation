@@ -15,7 +15,7 @@ import feh.tec.agents.schedule.Messages._
 import feh.tec.agents.util.OneToOneNegotiation
 import feh.util.InUnitInterval
 
-trait CommonAgentDefs extends AgentsTime{
+trait CommonAgentDefs extends AgentsTime with PutClassesInterface{
   agent: NegotiatingAgent with DynamicNegotiations =>
 
   type Time
@@ -90,7 +90,8 @@ trait CommonAgentDefs extends AgentsTime{
 
   def reportTimetable() = reportTo ! TimetableReport(ImmutableTimetable(timetable.asMap))
 
-  def putClassIn(prop: ClassesProposalMessage[Time], tt: MutableTimetable[Class[Time]]) = {
+  def putClassIn(prop: ClassesProposalMessage[Time], tt: MutableTimetable[Class[Time]])=
+  {
     val neg = negotiation(prop.negotiation)
     val start = prop.time
     val endT = tDescr.toMinutes(start) + prop.length
@@ -109,8 +110,15 @@ trait CommonAgentDefs extends AgentsTime{
 }
 
 object CommonAgentDefs{
+
   case class Timeouts( extraScopeTimeout: Timeout
                        )
+
+  trait PutClassesInterface {
+    self: NegotiatingAgent =>
+
+    def putClassIn(prop: ClassesProposalMessage[Time], tt: MutableTimetable[Class[Time]]): Either[IllegalArgumentException, Unit]
+  }
 
   def counterpartOpt(neg: Negotiation) = neg.get(OneToOneNegotiation.NegotiatingWith)
   def counterpart(neg: Negotiation)    = counterpartOpt(neg).get

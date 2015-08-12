@@ -4,9 +4,10 @@ import akka.actor.ActorLogging
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm._
+import feh.tec.agents.schedule.Discipline.MinutesPerWeek
 import feh.tec.agents.schedule.io.StudentsSelection
 import feh.tec.agents.util.OneToOneNegotiationId
-import feh.util.UUIDed
+import feh.util.{InUnitInterval, UUIDed}
 
 class StudentAgent( val id          : NegotiatingAgentId
                   , val thisIdVal   : StudentId
@@ -16,11 +17,26 @@ class StudentAgent( val id          : NegotiatingAgentId
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
+  with CommonAgentProposalAssessment
+  with UtilityDriven
   with DynamicNegotiations
   with ActorLogging
 {
-  
-  
+
+//  type NegotiationTime = this.type
+
+  def negotiationTime = ???
+
+  def assessedThreshold(neg: Negotiation) = ???
+
+  val classesAssessor: ClassesBasicPreferencesAssessor[Time] = ???
+
+  def utilityAcceptanceThreshold = ???
+
+  protected def weightedPriority(proposal: ProposalType) = ???
+
+  def preference(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType) = ???
+
   type ThisId = StudentId
   def thisIdVar = NegVars.StudentId
 
@@ -33,6 +49,32 @@ class StudentAgent( val id          : NegotiatingAgentId
     reportTimetable()
     context.stop(self)
   }
+
+  // the goal is finding classes for all disciplines, with the required duration // todo: labs
+  def goalAchievement(gh: GoalHolder) = {
+    val assignedClassesDurations = ImmutableTimetable.filterEmpty(gh.asMap)
+                                   .mapValues(classesDuration)
+                                   .values.flatten
+                                   .groupBy(_._1)
+                                   .mapValues(_.map(_._2).sum)
+    val remainsW = for {
+      disc <- toAttend
+      durC = disc.classes
+      durL = disc.labs // todo: labs
+    } yield disc -> (durC - assignedClassesDurations
+                            .filter(_._1.discipline == disc)
+                            .map(_._2).sum
+        ) / durC
+
+    InUnitInterval(remainsW.map(_._2).sum / remainsW.length)
+  }
+
+
+  private def classesDuration(mp: Map[_, Class[Time]]): Map[Class[Time], MinutesPerWeek] = {
+    val td = implicitly[TimeDescriptor[Time]]
+    mp.values.groupBy(identity).mapValues(_.size * td.step)
+  }
+
 }
 
 object StudentAgent{
