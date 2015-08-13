@@ -4,6 +4,7 @@ import akka.actor.ActorLogging
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm._
+import feh.tec.agents.schedule.CommonAgentProposal.DefaultAssessor
 import feh.tec.agents.schedule.Discipline.MinutesPerWeek
 import feh.tec.agents.schedule.io.StudentsSelection
 import feh.tec.agents.util.OneToOneNegotiationId
@@ -19,23 +20,10 @@ class StudentAgent( val id          : NegotiatingAgentId
   with CommonAgentDefs
   with CommonAgentProposalAssessment
   with UtilityDriven
+  with DefaultAssessor
   with DynamicNegotiations
   with ActorLogging
 {
-
-//  type NegotiationTime = this.type
-
-  def negotiationTime = ???
-
-  def assessedThreshold(neg: Negotiation) = ???
-
-  val classesAssessor: ClassesBasicPreferencesAssessor[Time] = ???
-
-  def utilityAcceptanceThreshold = ???
-
-  protected def weightedPriority(proposal: ProposalType) = ???
-
-  def preference(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType) = ???
 
   type ThisId = StudentId
   def thisIdVar = NegVars.StudentId

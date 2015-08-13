@@ -1,6 +1,6 @@
 package feh.tec.agents.schedule
 
-import feh.tec.agents.comm.NegotiatingAgent
+import feh.tec.agents.comm.{NegotiationMessage, NegotiatingAgent}
 import feh.tec.agents.comm.negotiations.Proposals.NegotiationProposal
 import feh.util.InUnitInterval
 
@@ -64,8 +64,10 @@ trait UtilityDrivenAgent extends AgentUtility{
 
   def utilityAcceptanceThreshold: Double
 
-  protected def acceptProposal(prop: ProposalType)
-  protected def rejectProposal(prop: ProposalType)
+  type MessageType <: NegotiationMessage
+
+  protected def acceptProposal(prop: ProposalType): MessageType
+  protected def rejectProposal(prop: ProposalType): MessageType
 
   def utilityDrivenProposalHandling(prop: ProposalType) =
     utility(negotiationTime, currentGoalHolder, prop) match {

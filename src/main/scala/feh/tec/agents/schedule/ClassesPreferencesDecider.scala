@@ -84,6 +84,11 @@ trait ClassesBasicPreferencesAssessor[Time] extends ClassesBasicPreferencesDecid
             , length    : Int
             , onDay     : DayOfWeek
             , at        : Time      ): InUnitInterval
+
+  def satisfies( discipline: Discipline
+               , length    : Int
+               , onDay     : DayOfWeek
+               , at        : Time      ) : Boolean
 }
 
 

@@ -9,7 +9,7 @@ import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationAcceptance, NegotiationEstablishingMessage, NegotiationProposition, NegotiationRejection}
-import feh.tec.agents.comm.negotiations.{Issues, Var}
+import feh.tec.agents.comm.negotiations.{Proposals, Issues, Var}
 import feh.tec.agents.schedule.CommonAgentDefs._
 import feh.tec.agents.schedule.Messages._
 import feh.tec.agents.util.OneToOneNegotiation
@@ -181,7 +181,7 @@ trait CommonAgentProposalsGeneration extends NegotiatingAgent{
   */
 
 trait CommonAgentProposalAssessment extends NegotiatingAgent{
-  agent: CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
+  agent: CommonAgentDefs with NegotiationReactionBuilder =>
 
   def assessedThreshold(neg: Negotiation): Float
 
@@ -205,14 +205,18 @@ trait CommonAgentProposalAssessment extends NegotiatingAgent{
     ClassesAcceptance[Time](neg.id, prop.uuid)
   }
 
-  type HandleClassesProposalMessageResult = Either[ClassesCounterProposal[Time], ClassesAcceptance[Time]]
+  type HandleClassesProposalMessageResult = Either[ClassesProposalMessage[Time] with Proposals.Rejection, ClassesAcceptance[Time]]
+
+  @deprecated
+  protected def assess( prop: ClassesProposalMessage[Time]
+                      , neg : Negotiation) = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time)
 
   /** Assesses the proposal and guards it in the timetable if it passes.
    */
   protected def handleClassesProposalMessage( prop: ClassesProposalMessage[Time]
                                             , neg_ : Negotiation = null): HandleClassesProposalMessageResult = {
       val neg = Option(neg_) getOrElse negotiation(prop.negotiation)
-      val a = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time)
+      val a = assess(prop, neg)
 
       //      log.debug("proposal assessed: " + a)
 
@@ -254,7 +258,10 @@ object CommonAgentProposal{
     lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
       new DeciderImpl with ClassesBasicPreferencesAssessor[Time]{
         def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval =
-          InUnitInterval(if(isBusyAt(discipline, length, onDay, at) contains false) 1 else 0)
+          InUnitInterval(if(satisfies(discipline, length, onDay, at)) 1 else 0)
+
+        def satisfies(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time) =
+          isBusyAt(discipline, length, onDay, at) contains false
       }
 
   }

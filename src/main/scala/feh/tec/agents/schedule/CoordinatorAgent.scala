@@ -71,6 +71,11 @@ class CoordinatorAgent( val id              : SystemAgentId
 
   protected def unknownSystemMessage(sysMsg: SystemMessage): Unit = {}
 
+
+  override def start() =
+    try super.start()
+    catch { case ex: Throwable => reportTo ! Report.Error(id, ex) }
+
   override def supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 0){
                                                                            case ex: Exception =>
                                                                              val id = searchNegotiator(sender()).get.id
