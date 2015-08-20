@@ -60,10 +60,14 @@ class GroupAgent( val id                : NegotiatingAgentId
     val durC = discipline.classes
     val durL = discipline.labs // todo: labs
 
-    val aC = assignedClassesDurations
+    val acd = assignedClassesDurations
                .filter(_._1.discipline == discipline)
                .map(_._2)
-               .sum / durC
+               .sum
+
+    val aC = acd.toDouble / durC
+
+    if (aC == 1 && acd != durC) reportTo ! Report.Debug("goalAchievement", s"discipline = $discipline, aC = $aC, acd = $acd")
 
     InUnitInterval(if (aC > 1) 0 else aC) // aC max 0
   }
@@ -77,7 +81,7 @@ class GroupAgent( val id                : NegotiatingAgentId
   // todo: distinct classes and labs
   private def classesDuration(mp: Map[_, Class[Time]]): Map[Class[Time], MinutesPerWeek] = {
     val td = implicitly[TimeDescriptor[Time]]
-    mp.values.groupBy(identity).mapValues(_.size * td.step)
+    mp.values.groupBy(identity).mapValues(_.size * td.step) // ??
   }
 
   def messageReceived: PartialFunction[Message, Unit] =
@@ -195,12 +199,14 @@ trait GroupAgentNegotiating{
 
       putClass(prop) match {
         case Left(_) =>
+          reportTo ! Report.Debug("handleNegotiation:putClass", "counter proposal")
           val prop  = nextProposalFor(neg).asInstanceOf[ClassesProposal[Time]]
           val cprop = ClassesCounterProposal(prop.negotiation, msg.uuid, prop.day, prop.time, prop.length, prop.extra)
           counterpart(neg) ! cprop
           neg.set(CurrentProposal)(cprop)
           awaitResponseFor(cprop)
         case _ =>
+          reportTo ! Report.Debug("handleNegotiation:putClass", "ok")
           noResponsesExpected(msg.negotiation)
       }
     case (msg: ClassesCounterProposal[Time]) suchThat AwaitingResponse() & WithNegotiation(neg) =>

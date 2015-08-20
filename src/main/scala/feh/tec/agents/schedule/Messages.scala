@@ -6,7 +6,7 @@ import feh.tec.agents.comm.Message.HasValues
 import feh.tec.agents.comm.negotiations.Proposals.NegotiationProposal
 import feh.tec.agents.comm.negotiations.{Var, Proposals}
 import feh.tec.agents.comm._
-import feh.util.PrintIndents
+import feh.util.{InUnitInterval, PrintIndents}
 
 object Messages {
   /** Used to calculate discipline priority */
@@ -112,7 +112,13 @@ object Messages {
     def underlyingMessage = None
   }
 
-  case class TimetableReport(tt: ImmutableTimetable[Option[Class[_]]])(implicit val sender: AgentRef)
+  case class TimetableReport( tt                  : ImmutableTimetable[Option[Class[_]]]
+                            , goalCompletion      : Option[InUnitInterval]                      = None
+                            , preference          : Option[InUnitInterval]                      = None
+                            , utility             : Option[Double]                              = None
+                            , utilityChangeHistory: Seq[(Double, ClassesProposalMessage[Time])] = Nil
+                            )
+                            (implicit val sender: AgentRef)
     extends Report with PrintIndents
   {
     def isSevere = false

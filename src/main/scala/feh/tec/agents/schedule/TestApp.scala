@@ -91,7 +91,7 @@ object TestApp extends App{
                         val cntrl = ActorRefExtractor(controller).actorRef
                         asys.scheduler.scheduleOnce(10 seconds span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
                         asys.scheduler.scheduleOnce(5 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(15 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(10 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
 
                       })
   )

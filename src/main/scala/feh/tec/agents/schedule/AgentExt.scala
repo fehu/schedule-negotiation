@@ -31,6 +31,7 @@ trait AgentUnconditionalPreferences{
   type UnconditionalPreferenceHolder
 
   def absolutePreference(ph: UnconditionalPreferenceHolder): InUnitInterval
+  def absoluteUtility(gh: UnconditionalPreferenceHolder): Double
 }
 
 
@@ -48,8 +49,7 @@ trait AgentUtility extends AgentGoal with AgentPreferences{
   def utility(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType) =
     if(satisfiesConstraints(proposal))
       deltaGoal(gh, assumeProposal(gh, proposal)) match {
-        case 0 => 0d
-        case d if d < 0 => 0d
+        case d if d <= 0 => 0d
         case d => d * (weightedPriority(proposal) + preference(time, gh, proposal))
       }
     else 0d
@@ -73,7 +73,11 @@ trait UtilityDrivenAgent extends AgentUtility{
 
   def utilityDrivenProposalHandling(prop: ProposalType) =
     utility(negotiationTime, currentGoalHolder, prop) match {
-      case accept if accept >= utilityAcceptanceThreshold(prop.negotiation) => acceptProposal(prop)
-      case _                                              => rejectProposal(prop)
+      case accept if accept >= utilityAcceptanceThreshold(prop.negotiation) =>
+        beforeAccept(prop, accept)
+        acceptProposal(prop)
+      case _ => rejectProposal(prop)
     }
+
+  protected def beforeAccept(prop: ProposalType, utility: Double) = {}
 }

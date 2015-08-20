@@ -1,6 +1,10 @@
 package feh.tec.agents.schedule
 
-case class Discipline(code: String, name: String, classes: Discipline.MinutesPerWeek, labs: Discipline.MinutesPerWeek)
+case class Discipline(code: String, name: String, classes: Discipline.MinutesPerWeek, labs: Discipline.MinutesPerWeek){
+  override def equals(obj: scala.Any) = canEqual(obj) && (obj match {
+    case that: Discipline => this.code == that.code
+  })
+}
 
 
 object Discipline{

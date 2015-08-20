@@ -4,7 +4,7 @@ import feh.tec.agents.comm.negotiations.Proposals
 import feh.tec.agents.comm.{Negotiation, NegotiatingAgent}
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.schedule.CommonAgentDefs.PutClassesInterface
-import feh.tec.agents.schedule.Messages.{ClassesMessage, ClassesAcceptance, ClassesProposalMessage}
+import feh.tec.agents.schedule.Messages.{TimetableReport, ClassesMessage, ClassesAcceptance, ClassesProposalMessage}
 import feh.util._
 
 trait UtilityDriven extends UtilityDrivenGoal with CommonAgentProposalAssessment{
@@ -31,9 +31,25 @@ trait UtilityDriven extends UtilityDrivenGoal with CommonAgentProposalAssessment
     */
   override protected def handleClassesProposalMessage(prop: ClassesProposalMessage[Time], neg_ : Negotiation) =
     utilityDrivenProposalHandling(prop) match {
-      case acc: ClassesAcceptance[Time]                               => Right(acc)
+      case acc: ClassesAcceptance[Time]                               => putClass(prop).ensuring(_.isRight)
+                                                                         Right(acc)
       case rej: ClassesProposalMessage[Time] with Proposals.Rejection => Left(rej)
     }
+
+  private var _utilityChangeHistory: Seq[(Double, ProposalType)] = Nil
+
+  override protected def beforeAccept(prop: ProposalType, utility: Double) = {
+    super.beforeAccept(prop, utility)
+    _utilityChangeHistory +:= utility -> prop
+
+  }
+
+  def utilityChangeHistory = _utilityChangeHistory
+
+  override def reportTimetable() = reportTo ! TimetableReport( ImmutableTimetable(timetable.asMap)
+                                                             , goalCompletion       = Option(goalAchievement(timetable))
+                                                             , utilityChangeHistory = utilityChangeHistory
+                                                             )
 }
 
 trait UtilityDrivenGoal extends UtilityDrivenAgent{

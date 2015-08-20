@@ -2,6 +2,7 @@ package feh.tec.agents.schedule.io
 
 import akka.actor._
 import feh.tec.agents.comm._
+import feh.tec.agents.comm.negotiations.Proposals.NegotiationProposal
 import feh.tec.agents.schedule.Messages.TimetableReport
 import feh.tec.agents.schedule._
 import reactivemongo.api._
@@ -137,7 +138,8 @@ object ReportDistributedMongoLogger{
       def write(t: Report) = t match {
         case tr: TimetableReport => writeTimeTable(tr)
         case err: Report.Error   => writeError(err)
-        case r => writeDefault(r)
+        case deb: Report.Debug   => writeDebug(deb)
+        case r                   => writeReport(r)
       }
 
       def writeClass(c: Class[_]) = BSONDocument(
@@ -158,34 +160,48 @@ object ReportDistributedMongoLogger{
                    tDescr.hr(time) -> writeClass(clazz)
                }
                k.toString -> BSONMapHandler.write(TreeMap(mp: _*))
-           } ++ Seq(
-              "_id"  -> BSONString(t.uuid.toString)
-            , "type" -> BSONString("Timetable")
-            , "sender"      -> BSONString(t.sender.id.name)
-            , "sender-role" -> BSONString(t.sender.id.role.toString)
-            , "isEmpty"     -> BSONBoolean(mp.forall(_._2.isEmpty))
-          )
+           }
+        ) ++ 
+        BSONDocument(
+            "_id"             -> t.uuid.toString
+          , "type"            -> "Timetable"
+          , "sender"          -> t.sender.id.name
+          , "sender-role"     -> t.sender.id.role.toString
+          , "isEmpty"         -> mp.forall(_._2.isEmpty)
+          , "goalCompletion"  -> t.goalCompletion.map(_.d)
+          , "preference"      -> t.preference.map(_.d)
+          , "utility"         -> t.utility
+          , "utilityChangeHistory" -> t.utilityChangeHistory.map{
+              case (u, msg) => BSONDocument( "utility" -> u
+                                           , "msg"     -> writeProposalMessage(msg)
+                                           )
+            }
         )
       }
 
-      def writeError(t: Report.Error) = BSONDocument( "_id"       -> t.uuid.toString
-                                                    , "type"      -> t.tpe
-                                                    , "overseer"  -> t.sender.id.name
-                                                    , "time"      -> System.nanoTime()
-                                                    , "name"      -> t.agent.name
+      def messageCommon(m: Message) = BSONDocument( "_id"       -> m.uuid.toString
+                                                  , "type"      -> m.tpe
+                                                  , "time"      -> System.nanoTime() )
+
+      def writeError(t: Report.Error) = messageCommon(t) ++
+                                        BSONDocument( "overseer"  -> t.sender.id.name
+                                                    , "sender"    -> t.agent.name
                                                     , "role"      -> t.agent.role.role
                                                     , "error"     -> t.err.getMessage
-                                                    , "cause"     -> Option(t.err.getCause).map(_.getMessage)
-      )
+                                                    , "cause"     -> Option(t.err.getCause).map(_.getMessage) )
 
-      def writeDefault(t: Report) = BSONDocument( "_id"         -> t.uuid.toString
-                                                , "sender"      -> t.sender.id.name
-                                                , "sender-role" -> t.sender.id.role.toString
-                                                , "type"        -> t.tpe
-                                                , "report"      -> t.asString
-                                                , "time"        -> System.nanoTime()
-                                                , "msg-type"    -> t.underlyingMessage.map(_.tpe).getOrElse("")
-      )
+      def writeReport(t: Report) = messageCommon(t) ++
+                                   BSONDocument( "sender"      -> t.sender.id.name
+                                               , "sender-role" -> t.sender.id.role.toString
+                                               , "report"      -> t.asString
+                                               , "msg-type"    -> t.underlyingMessage.map(_.tpe).getOrElse("") )
+
+      def writeDebug(d: Report.Debug) = messageCommon(d) ++ BSONDocument( "msg"    -> d.asString
+                                                                        , "sender" -> d.sender.id.name
+                                                                        )
+
+      def writeProposalMessage(msg: NegotiationProposal) = messageCommon(msg) ++
+                                                           BSONDocument() // todo
 
   }
 }
