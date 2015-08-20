@@ -23,4 +23,4 @@ foreach(function(x){ return x.find( {type: "Timetable", isEmpty: false}) })[0]
 
 ####################
 
-db.controller.find({type: "Error"}, {_id: false, type: false, overseer: false})
+db.controller.find({type: "Error"}, {_id: false, type: false, role: false, overseer: false})

@@ -18,9 +18,9 @@ class StudentAgent( val id          : NegotiatingAgentId
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
-  with CommonAgentProposalAssessment
-  with UtilityDriven
-  with DefaultAssessor
+//  with CommonAgentProposalAssessment
+//  with UtilityDriven
+//  with DefaultAssessor
   with DynamicNegotiations
   with ActorLogging
 {
@@ -38,6 +38,7 @@ class StudentAgent( val id          : NegotiatingAgentId
     context.stop(self)
   }
 
+/*
   // the goal is finding classes for all disciplines, with the required duration // todo: labs
   def goalAchievement(gh: GoalHolder) = {
     val assignedClassesDurations = ImmutableTimetable.filterEmpty(gh.asMap)
@@ -56,12 +57,7 @@ class StudentAgent( val id          : NegotiatingAgentId
 
     InUnitInterval(remainsW.map(_._2).sum / remainsW.length)
   }
-
-
-  private def classesDuration(mp: Map[_, Class[Time]]): Map[Class[Time], MinutesPerWeek] = {
-    val td = implicitly[TimeDescriptor[Time]]
-    mp.values.groupBy(identity).mapValues(_.size * td.step)
-  }
+*/
 
 }
 

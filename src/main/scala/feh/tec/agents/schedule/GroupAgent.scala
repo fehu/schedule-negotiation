@@ -9,6 +9,7 @@ import feh.tec.agents.comm.negotiations.Establishing._
 import feh.tec.agents.comm.negotiations.Proposals.Vars.CurrentProposal
 import feh.tec.agents.comm.negotiations._
 import feh.tec.agents.schedule.CommonAgentDefs._
+import feh.tec.agents.schedule.Discipline._
 import feh.tec.agents.schedule.Messages._
 import feh.tec.agents.util.OneToOneNegotiationId
 import feh.util._
@@ -34,6 +35,7 @@ class GroupAgent( val id                : NegotiatingAgentId
   with GroupAgentNegotiationPropositionsHandling
   with GroupAgentNegotiating
   with GroupAgentStudentsHandling
+  with UtilityDriven
   with ActorLogging
   with AgentsTime
 {
@@ -41,10 +43,43 @@ class GroupAgent( val id                : NegotiatingAgentId
   type ThisId = GroupId
   def thisIdVar = NegVars.GroupId
 
+  type NegotiationTime = AnyRef
+  def negotiationTime = null
 
+  protected def weightedPriority(proposal: ProposalType) = negotiation(proposal)(NegVars.DisciplinePriority)
+
+  def preference(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType) = 1d // todo
+
+  // todo: labs
+  def goalAchievement(gh: GoalHolder) = {
+    val assignedClassesDurations = ImmutableTimetable.filterEmpty(gh.asMap)
+                                   .mapValues(classesDuration)
+                                   .values.flatten
+                                   .groupBy(_._1)
+                                   .mapValues(_.map(_._2).sum)
+
+    val durC = discipline.classes
+    val durL = discipline.labs // todo: labs
+
+    val aC = assignedClassesDurations
+               .filter(_._1.discipline == discipline)
+               .map(_._2)
+               .sum / durC
+
+    InUnitInterval(if (aC > 1) 0 else aC) // aC max 0
+  }
 
   val classesDecider = classesAssessor
   def assessedThreshold(neg: Negotiation) = 0.7f // todo
+
+  def utilityAcceptanceThreshold(neg: Negotiation)   = assessedThreshold(neg)
+  def utilityAcceptanceThreshold(neg: NegotiationId) = utilityAcceptanceThreshold(negotiation(neg))
+
+  // todo: distinct classes and labs
+  private def classesDuration(mp: Map[_, Class[Time]]): Map[Class[Time], MinutesPerWeek] = {
+    val td = implicitly[TimeDescriptor[Time]]
+    mp.values.groupBy(identity).mapValues(_.size * td.step)
+  }
 
   def messageReceived: PartialFunction[Message, Unit] =
     handleNewNegotiations orElse handleMessage orElse handleStudents
