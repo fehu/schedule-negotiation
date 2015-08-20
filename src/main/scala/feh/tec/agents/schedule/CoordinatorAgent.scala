@@ -2,12 +2,12 @@ package feh.tec.agents.schedule
 
 import java.util.UUID
 
-import akka.actor.{OneForOneStrategy, SupervisorStrategy, ActorLogging}
+import akka.actor.{ActorLogging, OneForOneStrategy, SupervisorStrategy}
 import feh.tec.agents.comm.NegotiationController.AgentsManipulation
 import feh.tec.agents.comm._
-import feh.tec.agents.comm.agent.{Reporting, SystemSupport}
+import feh.tec.agents.comm.agent.Reporting
 import feh.tec.agents.schedule.CommonAgentDefs.Timeouts
-import feh.util._
+import feh.tec.agents.schedule.CoordinatorAgent.{ExtraScopeRequest, ExtraScopeResponse}
 
 import scala.collection.mutable
 
@@ -61,8 +61,9 @@ class CoordinatorAgent( val id              : SystemAgentId
   protected var searching = false
 
   def handleMessages: PartialFunction[Message, Unit] = {
-    case CoordinatorAgent.ExtraScopeRequest(ProfessorAgent.Role.PartTime, _) =>
-      sender() ! negotiatorsByRole.getOrElse(ProfessorAgent.Role.PartTime, Nil)
+    case msg@ExtraScopeRequest(ProfessorAgent.Role.PartTime, uuid) =>
+      val scope = negotiatorsByRole.getOrElse(ProfessorAgent.Role.PartTime, Nil)
+      msg.sender ! ExtraScopeResponse(scope.toSet, uuid)
     case _: Messages.NoCounterpartFound => // todo
     case GroupAgent.StartSearchingProfessors() =>
       searching = true
@@ -133,11 +134,15 @@ trait CoordinatorAgentStudentsHandling{
 object CoordinatorAgent{
   case class ExtraScopeRequest( role: NegotiationRole
                               , uuid: UUID              = UUID.randomUUID() )
-                              ( implicit val sender: AgentRef)
-    extends Message
-  {
+                              ( implicit val sender: AgentRef) extends Message {
     val tpe = "ExtraScopeRequest"
     val asString = s"for role $role"
+  }
+
+  case class ExtraScopeResponse( scope: Set[NegotiatingAgentRef], uuid: UUID)
+                               (implicit val sender: AgentRef) extends Message {
+    val tpe = "ExtraScopeResponse"
+    val asString = ""
   }
 
   type Creators[Ag <: NegotiatingAgent] = Iterable[NegotiatingAgentCreator[Ag]]

@@ -1,7 +1,6 @@
 package feh.tec.agents.schedule
 
 import akka.actor.ActorLogging
-import akka.util.Timeout
 import feh.tec.agents.comm.Message.HasValues
 import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
@@ -111,8 +110,7 @@ trait CommonAgentDefs extends AgentsTime with PutClassesInterface{
 
 object CommonAgentDefs{
 
-  case class Timeouts( extraScopeTimeout: Timeout
-                       )
+  case class Timeouts( )
 
   trait PutClassesInterface {
     self: NegotiatingAgent =>

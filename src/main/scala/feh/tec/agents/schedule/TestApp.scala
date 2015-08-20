@@ -46,7 +46,7 @@ object TestApp extends App{
 
   implicit def logFormat = ReportLogFormat.Pretty
 
-  lazy val timeouts = Timeouts(extraScopeTimeout = 10.seconds)
+  lazy val timeouts = Timeouts()
 
   val driver = new MongoDriver
   lazy val logDb = driver.connection(List("localhost"))
@@ -90,12 +90,12 @@ object TestApp extends App{
 
                         val cntrl = ActorRefExtractor(controller).actorRef
                         asys.scheduler.scheduleOnce(10 seconds span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(2 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(180 seconds span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(5 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(15 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
 
                       })
   )
 
-  asys.awaitTermination(5.minutes)
+  asys.awaitTermination(20.minutes)
   sys.exit()
 }

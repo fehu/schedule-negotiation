@@ -1,7 +1,6 @@
 package feh.tec.agents.schedule
 
 import akka.actor.ActorLogging
-import akka.util.Timeout
 import feh.tec.agents.comm.NegotiationVar.Scope
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{Negotiating, NegotiationReactionBuilder}
@@ -9,13 +8,13 @@ import feh.tec.agents.comm.negotiations.Establishing._
 import feh.tec.agents.comm.negotiations.Proposals.Vars.CurrentProposal
 import feh.tec.agents.comm.negotiations._
 import feh.tec.agents.schedule.CommonAgentDefs._
+import feh.tec.agents.schedule.CoordinatorAgent.ExtraScopeResponse
 import feh.tec.agents.schedule.Discipline._
 import feh.tec.agents.schedule.Messages._
 import feh.tec.agents.util.OneToOneNegotiationId
 import feh.util._
 
 import scala.collection.mutable
-import scala.concurrent.Await
 
 class GroupAgent( val id                : NegotiatingAgentId
                 , val thisIdVal         : GroupId
@@ -84,17 +83,7 @@ class GroupAgent( val id                : NegotiatingAgentId
   def messageReceived: PartialFunction[Message, Unit] =
     handleNewNegotiations orElse handleMessage orElse handleStudents
 
-  def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef] = {
-//    log.debug("askForExtraScope")
-    val res = Await.result(
-      (coordinator ? CoordinatorAgent.ExtraScopeRequest(role)).mapTo[List[NegotiatingAgentRef]],
-      timeout.duration*1.1
-    )
-//    log.debug("extra scope: " + res)
-    res.toSet
-  }
-
-  def extraScopeTimeout = timeouts.extraScopeTimeout
+  protected def askForExtraScope(role: NegotiationRole) = coordinator ! CoordinatorAgent.ExtraScopeRequest(role)
 
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = OneToOneNegotiationId(this.id, withAg.id)
 
@@ -229,9 +218,8 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
 
   def startNegotiatingOver(d: Discipline)
 
-  def askForExtraScope(role: NegotiationRole)(implicit timeout: Timeout): Set[NegotiatingAgentRef]
+  protected def askForExtraScope(role: NegotiationRole)
 
-  def extraScopeTimeout: Timeout
 
   def startSearchingProfessors() = SharedNegotiation.set(NegVars.NewNegAcceptance)(searchProfessors())
 
@@ -261,18 +249,21 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
     case (msg: NegotiationRejection) /*& AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       modifyNewNegAcceptance(false, msg)
       checkResponsesForPartTime()
+
+    case msg: ExtraScopeResponse => extraScopeRecieved(msg.scope)
   }
 
-  protected def caseNobodyAccepted(counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) =
-    if (!askedForExtraScope)
-      askForExtraScope(counterpart) match {
-        case set if set.isEmpty => noCounterpartFound()
-        case set => searchProfessors(set) |> {
-          accMap =>
-            askedForExtraScope = true
-            SharedNegotiation.transform(NegVars.NewNegAcceptance){_ ++ accMap} // todo: check it
-        }
-      }
+  protected def extraScopeRecieved(scope: Set[NegotiatingAgentRef]) = scope match {
+    case set if set.isEmpty => noCounterpartFound()
+    case set => searchProfessors(set) |> {
+      accMap =>
+        askedForExtraScope = true
+        SharedNegotiation.transform(NegVars.NewNegAcceptance){_ ++ accMap} // todo: check it
+    }
+  }
+
+  protected def caseNobodyAccepted(counterpart: NegotiationRole) =
+    if (!askedForExtraScope) askForExtraScope(counterpart)
     else noCounterpartFound()
 
   private def noCounterpartFound() = {
@@ -280,9 +271,9 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
 //    sys.error(s"no professor could be found for discipline $d")
   }
 
-  private def checkResponsesForPartTime() = checkResponsesFor(ProfessorAgent.Role.PartTime)(extraScopeTimeout)
+  private def checkResponsesForPartTime() = checkResponsesFor(ProfessorAgent.Role.PartTime)
 
-  private def checkResponsesFor(counterpart: NegotiationRole)(implicit extraScopeTimeout: Timeout) ={
+  private def checkResponsesFor(counterpart: NegotiationRole) ={
     val acc = SharedNegotiation(NegVars.NewNegAcceptance)
     ifAllResponded _ $ ifAnyAccepted(acc, startNegotiatingOver(discipline), caseNobodyAccepted(counterpart))
   }
