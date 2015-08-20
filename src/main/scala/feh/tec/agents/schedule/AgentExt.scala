@@ -39,7 +39,7 @@ trait AgentUtility extends AgentGoal with AgentPreferences{
 
   def satisfiesConstraints(proposal: ProposalType): Boolean
 
-  protected def deltaGoal(before: GoalHolder, after: GoalHolder) = goalAchievement(before) - goalAchievement(after)
+  protected def deltaGoal(before: GoalHolder, after: GoalHolder) = goalAchievement(after) - goalAchievement(before)
 
   protected def assumeProposal(gh: GoalHolder, proposal: ProposalType): GoalHolder
 
@@ -49,6 +49,7 @@ trait AgentUtility extends AgentGoal with AgentPreferences{
     if(satisfiesConstraints(proposal))
       deltaGoal(gh, assumeProposal(gh, proposal)) match {
         case 0 => 0d
+        case d if d < 0 => 0d
         case d => d * (weightedPriority(proposal) + preference(time, gh, proposal))
       }
     else 0d
