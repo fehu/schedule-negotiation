@@ -19,3 +19,6 @@ libraryDependencies += "org.apache.poi" % "poi-ooxml" % "3.12"
 libraryDependencies += "org.reactivemongo" %% "reactivemongo" % "0.10.5.0.akka23"
 
 libraryDependencies += "com.typesafe.play" %% "play-iteratees" % "2.4.0"
+
+
+scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-diagrams-max-classes", "50", "-diagrams-max-implicits", "20")
