@@ -1,3 +1,15 @@
+Contents
+========
+
+* [Message Flow](#message-flow)
+  * [PartialFunction](#partialfunction)
+* [Terminology](#terminology)
+* [Group Agent](#group-agent)
+  * [Handle New Negotiations](#handle-new-negotiations)
+  * [Handle Message](#handle-message)
+  * [Handle Students](#handle-students)
+
+
 Message Flow 
 ============ 
 The agents used for the negotiation are reactive: they act only in response to a message.
