@@ -103,3 +103,10 @@ It interracts with professors' decision partial functions `handleNegotiationStar
 It handles orders to add/remove a *student* to/from a *group*.
 
 The logic is pretty straight forward.
+
+
+#### Group's Goal Achivement
+
+The *goal achivement* is the **ratio of** the sum of assigned classes *lengths* **to** the sum of the required ones. **If** the *ratio* > 1, **return** 0.
+It is ensured that all the *classes* have the right *discipline*.
+
