@@ -61,7 +61,7 @@ class GroupAgent( val id                : NegotiatingAgentId
     val durL = discipline.labs // todo: labs
 
     val acd = assignedClassesDurations
-               .filter(_._1.discipline == discipline)
+               .ensuring(_.forall(_._1.discipline == discipline))
                .map(_._2)
                .sum
 
@@ -250,11 +250,11 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
       add _ $ mkNegotiationWith(msg.sender, discipline, NegVars.ProfessorId, id)
       log.debug("mkNegotiationWith " + msg.sender.id.name + " over " + discipline)
       modifyNewNegAcceptance(true, msg)
-      checkResponsesForPartTime()
+      checkResponses()
 
     case (msg: NegotiationRejection) /*& AwaitingResponse()*/ & WithDiscipline(`discipline`) =>
       modifyNewNegAcceptance(false, msg)
-      checkResponsesForPartTime()
+      checkResponses()
 
     case msg: ExtraScopeResponse => extraScopeRecieved(msg.scope)
   }
@@ -277,7 +277,7 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
 //    sys.error(s"no professor could be found for discipline $d")
   }
 
-  private def checkResponsesForPartTime() = checkResponsesFor(ProfessorAgent.Role.PartTime)
+  private def checkResponses() = checkResponsesFor(ProfessorAgent.Role.PartTime) // ask for PartTime extra scope
 
   private def checkResponsesFor(counterpart: NegotiationRole) ={
     val acc = SharedNegotiation(NegVars.NewNegAcceptance)
@@ -291,7 +291,6 @@ trait GroupAgentNegotiationPropositionsHandling extends Negotiating.DynamicNegot
   private def ifAllResponded(f: => Unit) = {
     val accMap = SharedNegotiation(NegVars.NewNegAcceptance)
     if(accMap.nonEmpty && accMap.forall(_._2.nonEmpty)) {
-      SharedNegotiation.set(NegVars.NewNegAcceptance)(Map())
       f
     }
   }

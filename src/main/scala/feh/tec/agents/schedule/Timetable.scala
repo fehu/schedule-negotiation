@@ -32,7 +32,7 @@ object Time{
 
     def toMinutes(t: Time): Int = t.discrete*mStep + mBegin
 
-    def randomly: Stream[Time] = Stream((0 to n).randomOrder(): _*).map(Time.apply)
+    def randomly: Stream[Time] = Stream((0 to n).randomOrder: _*).map(Time.apply)
 
     def humanReadable(t: Time) = {
       val m = toMinutes(t)
