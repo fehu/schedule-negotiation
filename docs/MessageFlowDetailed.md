@@ -86,3 +86,8 @@ This `PartialFunction` handles the negotiation over *class*(es) *time*.
 
 It interracts with professors' decision partial functions `handleNegotiationStart` and `handleNegotiation`.
 
+#### Handle Students
+
+It handles orders to add/remove a *student* to/from a *group*.
+
+The logic is pretty straight forward.
