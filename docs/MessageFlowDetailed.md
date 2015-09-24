@@ -59,6 +59,8 @@ Group Agent
 -----------
 A *group* agent represents a group of *students*, united for the purpose of studying a *discipline*, **one per group**. It's goal is to encounter and come to an agreement over a *class* with the best suited *professor*, able to teach the *discipline*.
 
+[[scaladoc](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.GroupAgent), [source](/src/main/scala/feh/tec/agents/schedule/GroupAgent.scala)]
+
 ---
 
 In the current implementation a group agent's behaviour is divided into three *partial functions*:
@@ -117,9 +119,25 @@ The *goal achivement* is the **ratio of** the sum of assigned classes *lengths* 
 
 Professor Agent
 ---------------
+A *professor* agent represent a university professor. In the current implementation there are two types of professors: **full-time** and **part-time**. They are distinguished by agent's *role*. Each professor knows the disciplines he can teach.
 
+[[scaladoc](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.ProfessorAgent), [source](/src/main/scala/feh/tec/agents/schedule/ProfessorAgent.scala)]
 
+---
 
+Currently a *professor*'s behaviour is described by three partial functions:
+
+ - `handleNewNegotiation` (`handleNegotiationPropositions` in the code)
+ - `handleNegotiationStart`
+ - `handleNegotiation`
+  
+#### Handle New Negotiation / Handle Negotiation Propositions
+
+The function handles `NegotiationProposition`s, sent by *groups*.
+
+On receive of such message, the agent's response is based on whether he can or cannot teach the *discipline*, included in the message. Possible responses are `NegotiationAcceptance` and `NegotiationRejection`. In case of acceptance, the agent creates and guards the *negotiation*, guarding the proposition's sender as negotiation's *counterpart*.
+
+Interracts with groups' decision partial functions `handleNewNegotiations`.
 
 Common Definitions
 ------------------
