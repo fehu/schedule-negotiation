@@ -61,7 +61,7 @@ Terminology
 - An agent's **scope** is a set of agents, that can be comunicated with.
 - ![discipline-priority](https://latex.codecogs.com/png.latex?{\\mathrm{discipline~priority}~ =~\\frac{\\sum \\mathrm{groups}~|~\\mathrm{chose}~\\mathbf{discipline}}{\\sum \\mathrm{professors}~|~\\mathrm{can~teach}~\\mathbf{discipline}}})
 
-  **TO DO**: the *discipline priority* should be dynamic.
+  **TO DO:** the *discipline priority* should be dynamic.
 
 - **timetable** TBD
 
@@ -102,7 +102,7 @@ This `PartialFunction` handles the negotiation over *class*(es) *time*.
 4. Awaits the corresponding response, expecting `ClassesAcceptance` or `ClassesCounterProposal` (or `ClassesRejection`) message. 
 
 * (4A) **In case of an acceptance**, the agent tries to put the *class* into it's *timetable*. 
-  * (+) In case of success, it reports termination (**TO DO**: not implemented yet). 
+  * (+) In case of success, it reports termination (**TO DO:** not implemented yet). 
   * (-) In case of failure, it generates a `ClassesCounterProposal` and **goes to (3)**.
 * (4R) **In case of a rejection**, the agent **goes to (2)** (currently not used).
 * (4P) **In case of a counter-proposal**, the agent assesses the **utility** of proposal.
@@ -136,7 +136,7 @@ A *professor* agent represent a university professor. In the current implementat
 
 ---
 
-Currently a *professor*'s behaviour is described by three partial functions:
+Currently a *professor*'s behaTviour is described by three partial functions:
 
  - `handleNewNegotiation` (`handleNegotiationPropositions` in the code)
  - `handleNegotiationStart`
@@ -195,3 +195,5 @@ The *utility* is a mean to assess *proposals*. It is calculated based on
 
 Coordinator Agent
 -----------------
+
+TBD
