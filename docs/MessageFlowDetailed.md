@@ -27,7 +27,7 @@ A partial function of type `PartialFunction[A, B]` is a unary function
   the domain of the function.
 </p>
 <footer>
-— <cite><a href="http://www.scala-lang.org/api/2.11.7/#scala.PartialFunction/">Scala API</a></cite>
+— <cite><a href="http://www.scala-lang.org/api/2.11.7/#scala.PartialFunction">Scala API</a></cite>
 </footer>
 </blockquote>
 
@@ -119,11 +119,15 @@ Professor Agent
 ---------------
 
 
+
+
 Common Definitions
 ------------------
 
 #### Utility
-[[scaladoc](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.UtilityDriven@inheritance-diagram), [source](/src/main/scala/feh/tec/agents/schedule/UtilityDriven.scala)]
+UtilityDriven: [[scaladoc](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.UtilityDriven@inheritance-diagram), [source](/src/main/scala/feh/tec/agents/schedule/UtilityDriven.scala)]
+
+AgentExt: [[source](/src/main/scala/feh/tec/agents/schedule/AgentExt.scala)]
 
 The *utility* is a mean to assess *proposals*. It is calculated based on 
 - the *proposal*;
