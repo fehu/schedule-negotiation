@@ -1,0 +1,691 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>MutableTimetable - feh.tec.agents.schedule.MutableTimetable</title>
+          <meta name="description" content="MutableTimetable - feh.tec.agents.schedule.MutableTimetable" />
+          <meta name="keywords" content="MutableTimetable feh.tec.agents.schedule.MutableTimetable" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../lib/tools.tooltip.js"></script>
+      <script type="text/javascript" src="../../../../lib/modernizr.custom.js"></script><script type="text/javascript" src="../../../../lib/diagrams.js" id="diagrams-js"></script>
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'feh.tec.agents.schedule.MutableTimetable';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="type">
+      <div id="definition">
+        <img src="../../../../lib/class_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="feh">feh</a>.<a href="../../package.html" class="extype" name="feh.tec">tec</a>.<a href="../package.html" class="extype" name="feh.tec.agents">agents</a>.<a href="package.html" class="extype" name="feh.tec.agents.schedule">schedule</a></p>
+        <h1>MutableTimetable</h1><h3><span class="morelinks"><div>Related Doc:
+            <a href="package.html" class="extype" name="feh.tec.agents.schedule">package schedule</a>
+          </div></span></h3><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">MutableTimetable</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="Timetable.html" class="extype" name="feh.tec.agents.schedule.Timetable">Timetable</a>[<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]] with <a href="TimetableAccess.html" class="extype" name="feh.tec.agents.schedule.TimetableAccess">TimetableAccess</a>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent"><a href="TimetableAccess.html" class="extype" name="feh.tec.agents.schedule.TimetableAccess">TimetableAccess</a>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>], <a href="TimeTableWrite.html" class="extype" name="feh.tec.agents.schedule.TimeTableWrite">TimeTableWrite</a>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>], <a href="TimeTableRead.html" class="extype" name="feh.tec.agents.schedule.TimeTableRead">TimeTableRead</a>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>], <a href="Timetable.html" class="extype" name="feh.tec.agents.schedule.Timetable">Timetable</a>[<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div><div class="toggleContainer block">
+            <span class="toggle">Known Subclasses</span>
+            <div class="subClasses hiddenContent"><a href="MutableTimetable$CopyExt.html" class="extype" name="feh.tec.agents.schedule.MutableTimetable.CopyExt">CopyExt</a></div>
+          </div><div class="toggleContainer block diagram-container" id="inheritance-diagram-container">
+                <span class="toggle diagram-link">Type Hierarchy</span>
+                <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#diagrams" target="_blank" class="diagram-help">Learn more about scaladoc diagrams</a>
+                <div class="diagram" id="inheritance-diagram"><svg class="class-diagram" id="graph1" viewBox="0.00 0.00 316.00 155.00" height="155pt" width="316pt" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"><g transform="scale(1 1) rotate(0) translate(4 151)" class="graph" id="graph0"><polygon points="-4,4 -4,-151 312,-151 312,4 -4,4" stroke="none" fill="white"></polygon><g class="cluster" id="clust1"></g><g class="cluster" id="clust2"></g><!-- node0 --><g class="node this class" id="graph1_0"><g id="a_this class|graph1_0"><a xlink:title="feh.tec.agents.schedule.MutableTimetable (this class)" xlink:href="#inheritance-diagram"><polygon points="213,-86 81,-86 81,-61 213,-61 213,-86" stroke="#115f3b" fill="#0a955b"></polygon><image xlink:href="../../../../lib/class_diagram.png" y="-80.5" x="91" preserveAspectRatio="xMinYMin meet" height="15px" width="15px"></image><text fill="#ffffff" font-size="10.00" font-family="Arial" y="-70.5" x="112" text-anchor="start">MutableTimetable[T]</text></a></g></g><!-- node1 --><g class="node trait" id="graph1_1"><g id="a_trait|graph1_1"><a xlink:title="feh.tec.agents.schedule.MutableTimetable.CopyExt" xlink:href="MutableTimetable$CopyExt.html#inheritance-diagram"><polygon points="188,-25 106,-25 106,-0 188,-0 188,-25" stroke="#37657d" fill="#498aad"></polygon><image xlink:href="../../../../lib/trait_diagram.png" y="-19.5" x="116" preserveAspectRatio="xMinYMin meet" height="15px" width="15px"></image><text fill="#ffffff" font-size="10.00" font-family="Arial" y="-9.5" x="137" text-anchor="start">CopyExt</text></a></g></g><!-- node0&#45;&gt;node1 --><g class="edge inheritance" id="graph1_0_1"><g id="a_inheritance|graph1_0_1"><a xlink:title="CopyExt is a subtype of MutableTimetable[T]"><path d="M147,-55.6874C147,-45.9173 147,-33.8534 147,-25.1323" stroke="#d4d4d4" fill="none"></path><polygon points="145.25,-55.8435 147,-60.8435 148.75,-55.8435 145.25,-55.8435" stroke="#d4d4d4" fill="none"></polygon></a></g></g><!-- node2 --><g class="node trait" id="graph1_2"><g id="a_trait|graph1_2"><a xlink:title="feh.tec.agents.schedule.Timetable" xlink:href="Timetable.html#inheritance-diagram"><polygon points="132,-147 0,-147 0,-122 132,-122 132,-147" stroke="#37657d" fill="#498aad"></polygon><image xlink:href="../../../../lib/trait_diagram.png" y="-141.5" x="10" preserveAspectRatio="xMinYMin meet" height="15px" width="15px"></image><text fill="#ffffff" font-size="10.00" font-family="Arial" y="-131.5" x="31" text-anchor="start">Timetable[Option[T]]</text></a></g></g><!-- node2&#45;&gt;node0 --><g class="edge inheritance" id="graph1_2_0"><g id="a_inheritance|graph1_2_0"><a xlink:title="MutableTimetable[T] is a subtype of Timetable[Option[T]]"><path d="M86.1559,-118.819C100.016,-108.723 118.17,-95.4995 131.03,-86.1323" stroke="#d4d4d4" fill="none"></path><polygon points="85.0142,-117.485 82.003,-121.843 87.0749,-120.314 85.0142,-117.485" stroke="#d4d4d4" fill="none"></polygon></a></g></g><!-- node3 --><g class="node trait" id="graph1_3"><g id="a_trait|graph1_3"><a xlink:title="feh.tec.agents.schedule.TimetableAccess" xlink:href="TimetableAccess.html#inheritance-diagram"><polygon points="308,-147 150,-147 150,-122 308,-122 308,-147" stroke="#37657d" fill="#498aad"></polygon><image xlink:href="../../../../lib/trait_diagram.png" y="-141.5" x="160" preserveAspectRatio="xMinYMin meet" height="15px" width="15px"></image><text fill="#ffffff" font-size="10.00" font-family="Arial" y="-131.5" x="181" text-anchor="start">TimetableAccess[Time, T]</text></a></g></g><!-- node3&#45;&gt;node0 --><g class="edge inheritance" id="graph1_3_0"><g id="a_inheritance|graph1_3_0"><a xlink:title="MutableTimetable[T] is a subtype of TimetableAccess[Time, T]"><path d="M208.595,-118.819C194.564,-108.723 176.186,-95.4995 163.167,-86.1323" stroke="#d4d4d4" fill="none"></path><polygon points="207.719,-120.344 212.799,-121.843 209.763,-117.503 207.719,-120.344" stroke="#d4d4d4" fill="none"></polygon></a></g></g></g></svg></div>
+              </div></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol>
+                
+                <li class="alpha in"><span>Alphabetic</span></li>
+                <li class="inherit out"><span>By inheritance</span></li>
+              </ol>
+            </div>
+        <div id="ancestors">
+                <span class="filtertype">Inherited<br />
+                </span>
+                <ol id="linearization">
+                  <li class="in" name="feh.tec.agents.schedule.MutableTimetable"><span>MutableTimetable</span></li><li class="in" name="feh.tec.agents.schedule.TimetableAccess"><span>TimetableAccess</span></li><li class="in" name="feh.tec.agents.schedule.TimeTableWrite"><span>TimeTableWrite</span></li><li class="in" name="feh.tec.agents.schedule.TimeTableRead"><span>TimeTableRead</span></li><li class="in" name="feh.tec.agents.schedule.Timetable"><span>Timetable</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                </ol>
+              </div><div id="ancestors">
+            <span class="filtertype"></span>
+            <ol>
+              <li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li>
+            </ol>
+            <a href="http://docs.scala-lang.org/overviews/scaladoc/usage.html#members" target="_blank">Learn more about member selection</a>
+          </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="feh.tec.agents.schedule.MutableTimetable#&lt;init&gt;" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;()(implicittimeDescr:feh.tec.agents.schedule.Time.Descriptor):feh.tec.agents.schedule.MutableTimetable[T]"></a>
+      <a id="&lt;init&gt;:MutableTimetable[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">MutableTimetable</span><span class="params">()</span><span class="params">(<span class="implicit">implicit </span><span name="timeDescr">timeDescr: <a href="Time$$Descriptor.html" class="extype" name="feh.tec.agents.schedule.Time.Descriptor">Descriptor</a></span>)</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@&lt;init&gt;()(implicittimeDescr:feh.tec.agents.schedule.Time.Descriptor):feh.tec.agents.schedule.MutableTimetable[T]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="feh.tec.agents.schedule.MutableTimetable.CopyExt" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="CopyExtextendsMutableTimetable[T]"></a>
+      <a id="CopyExt:CopyExt"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MutableTimetable$CopyExt.html"><span class="name">CopyExt</span></a><span class="result"> extends <a href="" class="extype" name="feh.tec.agents.schedule.MutableTimetable">MutableTimetable</a>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@CopyExtextendsMutableTimetable[T]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="scala.AnyRef#!=" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a>
+      <a id="!=(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@!=(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <a id="##():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@##():Int" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a>
+      <a id="==(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@==(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.MutableTimetable#all" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="all:Seq[T]"></a>
+      <a id="all:Seq[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">all</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@all:Seq[T]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="feh.tec.agents.schedule.MutableTimetable">MutableTimetable</a> → <a href="TimeTableRead.html" class="extype" name="feh.tec.agents.schedule.TimeTableRead">TimeTableRead</a></dd></dl></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <a id="asInstanceOf[T0]:T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@asInstanceOf[T0]:T0" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.MutableTimetable#asMap" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asMap:Map[feh.tec.agents.schedule.DayOfWeek,Map[feh.tec.agents.schedule.Time,Option[T]]]"></a>
+      <a id="asMap:Map[DayOfWeek,Map[Time,Option[T]]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asMap</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="package.html#DayOfWeek=feh.tec.agents.schedule.DaysOfWeek.Value" class="extmbr" name="feh.tec.agents.schedule.DayOfWeek">DayOfWeek</a>, <span class="extype" name="scala.Predef.Map">Map</span>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]]]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@asMap:Map[feh.tec.agents.schedule.DayOfWeek,Map[feh.tec.agents.schedule.Time,Option[T]]]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="feh.tec.agents.schedule.MutableTimetable">MutableTimetable</a> → <a href="Timetable.html" class="extype" name="feh.tec.agents.schedule.Timetable">Timetable</a></dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.MutableTimetable#at" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="at(day:feh.tec.agents.schedule.DayOfWeek,from:feh.tec.agents.schedule.Time,to:feh.tec.agents.schedule.Time):Seq[T]"></a>
+      <a id="at(DayOfWeek,Time,Time):Seq[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">at</span><span class="params">(<span name="day">day: <a href="package.html#DayOfWeek=feh.tec.agents.schedule.DaysOfWeek.Value" class="extmbr" name="feh.tec.agents.schedule.DayOfWeek">DayOfWeek</a></span>, <span name="from">from: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>, <span name="to">to: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>)</span><span class="result">: <span class="extype" name="scala.Seq">Seq</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@at(day:feh.tec.agents.schedule.DayOfWeek,from:feh.tec.agents.schedule.Time,to:feh.tec.agents.schedule.Time):Seq[T]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="feh.tec.agents.schedule.MutableTimetable">MutableTimetable</a> → <a href="TimeTableRead.html" class="extype" name="feh.tec.agents.schedule.TimeTableRead">TimeTableRead</a></dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.MutableTimetable#at" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="at(day:feh.tec.agents.schedule.DayOfWeek,time:feh.tec.agents.schedule.Time):Option[T]"></a>
+      <a id="at(DayOfWeek,Time):Option[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">at</span><span class="params">(<span name="day">day: <a href="package.html#DayOfWeek=feh.tec.agents.schedule.DaysOfWeek.Value" class="extmbr" name="feh.tec.agents.schedule.DayOfWeek">DayOfWeek</a></span>, <span name="time">time: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@at(day:feh.tec.agents.schedule.DayOfWeek,time:feh.tec.agents.schedule.Time):Option[T]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="feh.tec.agents.schedule.MutableTimetable">MutableTimetable</a> → <a href="TimeTableRead.html" class="extype" name="feh.tec.agents.schedule.TimeTableRead">TimeTableRead</a></dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.TimeTableRead#busyAt" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="busyAt(day:feh.tec.agents.schedule.DayOfWeek,from:Time,to:Time):Boolean"></a>
+      <a id="busyAt(DayOfWeek,Time,Time):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">busyAt</span><span class="params">(<span name="day">day: <a href="package.html#DayOfWeek=feh.tec.agents.schedule.DaysOfWeek.Value" class="extmbr" name="feh.tec.agents.schedule.DayOfWeek">DayOfWeek</a></span>, <span name="from">from: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>, <span name="to">to: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@busyAt(day:feh.tec.agents.schedule.DayOfWeek,from:Time,to:Time):Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="TimeTableRead.html" class="extype" name="feh.tec.agents.schedule.TimeTableRead">TimeTableRead</a></dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.TimeTableRead#busyAt" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="busyAt(day:feh.tec.agents.schedule.DayOfWeek,time:Time):Boolean"></a>
+      <a id="busyAt(DayOfWeek,Time):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">busyAt</span><span class="params">(<span name="day">day: <a href="package.html#DayOfWeek=feh.tec.agents.schedule.DaysOfWeek.Value" class="extmbr" name="feh.tec.agents.schedule.DayOfWeek">DayOfWeek</a></span>, <span name="time">time: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@busyAt(day:feh.tec.agents.schedule.DayOfWeek,time:Time):Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="TimeTableRead.html" class="extype" name="feh.tec.agents.schedule.TimeTableRead">TimeTableRead</a></dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a>
+      <a id="clone():AnyRef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@clone():Object" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.MutableTimetable#copy" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="copy:feh.tec.agents.schedule.MutableTimetable[T]"></a>
+      <a id="copy:MutableTimetable[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">copy</span><span class="result">: <a href="" class="extype" name="feh.tec.agents.schedule.MutableTimetable">MutableTimetable</a>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@copy:feh.tec.agents.schedule.MutableTimetable[T]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="scala.AnyRef#eq" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a>
+      <a id="eq(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@eq(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#equals" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="equals(x$1:Any):Boolean"></a>
+      <a id="equals(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@equals(x$1:Any):Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <a id="finalize():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@finalize():Unit" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <a id="getClass():java.lang.Class[_]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">java.lang.Class</span>[_]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@getClass():Class[_]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#hashCode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hashCode():Int"></a>
+      <a id="hashCode():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Int">Int</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@hashCode():Int" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@isInstanceOf[T0]:Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a>
+      <a id="ne(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.AnyRef">AnyRef</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@ne(x$1:AnyRef):Boolean" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <a id="notify():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@notify():Unit" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <a id="notifyAll():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@notifyAll():Unit" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.MutableTimetable#put" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="put(day:feh.tec.agents.schedule.DayOfWeek,from:feh.tec.agents.schedule.Time,to:feh.tec.agents.schedule.Time,t:T):Either[IllegalArgumentException,Unit]"></a>
+      <a id="put(DayOfWeek,Time,Time,T):Either[IllegalArgumentException,Unit]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">put</span><span class="params">(<span name="day">day: <a href="package.html#DayOfWeek=feh.tec.agents.schedule.DaysOfWeek.Value" class="extmbr" name="feh.tec.agents.schedule.DayOfWeek">DayOfWeek</a></span>, <span name="from">from: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>, <span name="to">to: <a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a></span>, <span name="t">t: <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span></span>)</span><span class="result">: <span class="extype" name="scala.Either">Either</span>[<span class="extype" name="scala.IllegalArgumentException">IllegalArgumentException</span>, <span class="extype" name="scala.Unit">Unit</span>]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@put(day:feh.tec.agents.schedule.DayOfWeek,from:feh.tec.agents.schedule.Time,to:feh.tec.agents.schedule.Time,t:T):Either[IllegalArgumentException,Unit]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="feh.tec.agents.schedule.MutableTimetable">MutableTimetable</a> → <a href="TimeTableWrite.html" class="extype" name="feh.tec.agents.schedule.TimeTableWrite">TimeTableWrite</a></dd></dl></div>
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a>
+      <a id="synchronized[T0](⇒T0):T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@synchronized[T0](x$1:=&gt;T0):T0" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="feh.tec.agents.schedule.MutableTimetable#timeTable" visbl="prt" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="timeTable:Map[feh.tec.agents.schedule.DayOfWeek,Array[Option[T]]]"></a>
+      <a id="timeTable:Map[DayOfWeek,Array[Option[T]]]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">timeTable</span><span class="result">: <span class="extype" name="scala.Predef.Map">Map</span>[<a href="package.html#DayOfWeek=feh.tec.agents.schedule.DaysOfWeek.Value" class="extmbr" name="feh.tec.agents.schedule.DayOfWeek">DayOfWeek</a>, <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]]]</span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@timeTable:Map[feh.tec.agents.schedule.DayOfWeek,Array[Option[T]]]" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd></dl></div>
+    </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <a id="toString():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@toString():String" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <a id="wait():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@wait():Unit" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a>
+      <a id="wait(Long,Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>, <span name="arg1">arg1: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@wait(x$1:Long,x$2:Int):Unit" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a>
+      <a id="wait(Long):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span class="extype" name="scala.Long">Long</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#feh.tec.agents.schedule.MutableTimetable@wait(x$1:Long):Unit" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" />
+      </a>
+    </span>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="feh.tec.agents.schedule.TimetableAccess">
+              <h3>Inherited from <a href="TimetableAccess.html" class="extype" name="feh.tec.agents.schedule.TimetableAccess">TimetableAccess</a>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</h3>
+            </div><div class="parent" name="feh.tec.agents.schedule.TimeTableWrite">
+              <h3>Inherited from <a href="TimeTableWrite.html" class="extype" name="feh.tec.agents.schedule.TimeTableWrite">TimeTableWrite</a>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</h3>
+            </div><div class="parent" name="feh.tec.agents.schedule.TimeTableRead">
+              <h3>Inherited from <a href="TimeTableRead.html" class="extype" name="feh.tec.agents.schedule.TimeTableRead">TimeTableRead</a>[<a href="Time.html" class="extype" name="feh.tec.agents.schedule.Time">Time</a>, <span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]</h3>
+            </div><div class="parent" name="feh.tec.agents.schedule.Timetable">
+              <h3>Inherited from <a href="Timetable.html" class="extype" name="feh.tec.agents.schedule.Timetable">Timetable</a>[<span class="extype" name="scala.Option">Option</span>[<span class="extype" name="feh.tec.agents.schedule.MutableTimetable.T">T</span>]]</h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
