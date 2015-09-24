@@ -38,6 +38,8 @@ Terminology
 - An agent's **scope** is a set of agents, that can be comunicated with.
 - ![discipline-priority](https://latex.codecogs.com/png.latex?{\\mathrm{discipline~priority}~ =~\\frac{\\sum \\mathrm{professors}~|~\\mathrm{can~teach}~\\mathbf{discipline}}{\\sum \\mathrm{groups}~|~\\mathrm{chose}~\\mathbf{discipline}}})
 
+  **TO DO**: the *discipline priority* should be dynamic.
+
 Group Agent
 -----------
 A *group* agent represents a group of *students*, united for the purpose of studying a *discipline*, **one per group**. It's goal is to encounter and come to an agreement over a *class* with the best suited *professor*, able to teach the *discipline*.
