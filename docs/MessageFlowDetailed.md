@@ -1,17 +1,28 @@
-Contents
-========
-
-* [Message Flow](#message-flow)
-  * [PartialFunction](#partialfunction)
-* [Terminology](#terminology)
-* [Group Agent](#group-agent)
-  * [Handle New Negotiations](#handle-new-negotiations)
-  * [Handle Message](#handle-message)
-  * [Handle Students](#handle-students)
-
-
 Message Flow 
 ============ 
+
+
+* 
+    * [PartialFunction](#partialfunction)
+* [Terminology](#terminology)
+* [Group Agent](#group-agent)
+    * 
+      * [Handle New Negotiations](#handle-new-negotiations)
+      * [Handle Message](#handle-message)
+      * [Handle Students](#handle-students)
+    * [Goal Achivement](#goal-achivement)
+* [Professor Agent](#professor-agent)
+    * 
+      * [Handle New Negotiation / Handle Negotiation Propositions](#handle-new-negotiation--handle-negotiation-propositions)
+      * [Handle Negotiation Start](#handle-negotiation-start)
+      * [Handle Negotiation](#handle-negotiation)
+    * [Goal Achivement](#goal-achivement-1)
+* [Common Definitions](#common-definitions)
+    * [Utility](#utility)
+* [Coordinator Agent](#coordinator-agent)
+
+---
+
 The agents used for the negotiation are reactive: they act only in response to a message.
 The action taken is determined by `messageReceived` method. It’s type is `PartialFunction[Message, Unit]`.
 
