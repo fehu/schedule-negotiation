@@ -36,11 +36,11 @@ Terminology
 - A **discipline** is an *abstract* **class** descriptor; the one that the students choose to study.
 - A **class** is a *specific implementation* of a **discipline**, that has *time*, a *group*, a *professor* and a *class room* assigned.
 - An agent's **scope** is a set of agents, that can be comunicated with.
-
+- ![discipline-priority](https://latex.codecogs.com/png.latex?{\\mathrm{discipline~priority}~ =~\\frac{\\sum \\mathrm{professors}~|~\\mathrm{can~teach}~\\mathbf{discipline}}{\\sum \\mathrm{groups}~|~\\mathrm{chose}~\\mathbf{discipline}}})
 
 Group Agent
 -----------
-A *group* agent represents a group of *students*, united for the purpose of studying some *discipline* (one per group). It's goal is to encounter and come to an agreement over a *class* with the best suited *professor*, able to teach the *discipline*.
+A *group* agent represents a group of *students*, united for the purpose of studying a *discipline*, **one per group**. It's goal is to encounter and come to an agreement over a *class* with the best suited *professor*, able to teach the *discipline*.
 
 ---
 
@@ -60,3 +60,4 @@ This `PartialFunction` creates new negotiations with the *professors* in *scope*
 * In case that all the *professors* asked responded with a `NegotiationRejection`, a group agent ask the *coordinator* for extra *scope* &mdash; the *part-time professors*. In case that even then an agent is unable to establish at least one negotiation, it notifies the *coordinator* of it's failure with a `NoCounterpartFound` message.
 
 It interracts with *professors*' decision partial functions `handleNewNegotiations` and `handleNegotiationStart`.
+
