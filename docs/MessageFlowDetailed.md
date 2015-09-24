@@ -59,4 +59,4 @@ This `PartialFunction` creates new negotiations with the *professors* in *scope*
 
 * In case that all the *professors* asked responded with a `NegotiationRejection`, a group agent ask the *coordinator* for extra *scope* &mdash; the *part-time professors*. In case that even then an agent is unable to establish at least one negotiation, it notifies the *coordinator* of it's failure with a `NoCounterpartFound` message.
 
-
+It interracts with *professors*' decision partial functions `handleNewNegotiations` and `handleNegotiationStart`.
