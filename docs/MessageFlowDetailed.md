@@ -29,3 +29,28 @@ gets applied where this partial function is not defined.
 </blockquote>
 
 It is used widely used on the diagram.
+
+Terminology
+-----------
+
+- A **discipline** is an *abstract* **class** descriptor; the one that the students choose to study.
+- A **class** is a *specific implementation* of a **discipline**, that has *time*, a *group*, a *professor* and a *class room* assigned.
+- An agent's **scope** is a set of agents, that can be comunicated with.
+
+
+Group Agent
+-----------
+A *group* agent represents a group of *students*, united for the purpose of studying some *discipline* (one per group). It's goal is to encounter and come to an agreement over a *class* with the best suited *professor*, able to teach the *discipline*.
+
+---
+
+In the current implementation a group agent's behaviour is divided into three *partial functions*:
+- `handleNewNegotiations`
+- `handleMessage`
+- `handleStudents`
+
+#### Handle New Negotiations
+
+This `PartialFunction` specializes in creating new negotiations with the *professors* over *disciplines*. The agent stars to search for the professors, able to teach the *discipline*, on receive of a `StartSearchingProfessors` message. It sends a `NegotiationProposition` message, including in it the desired *discipline*, to every *professor* agent in the *scope*. A *group* agent then awaits for a response, that is expected to be either `NegotiationAcceptance` or `NegotiationRejection`. It guards the responses until all of them have been received; then sends to each *professor*, that responded with an acceptance, a `CounterpartsFound` message, including the number of *professors* that responded positively. Thus starts the `handleMessage` part of the negotiation. In case that all the *professors* asked responded with a `NegotiationRejection`, a group agent ask the *coordinator* for extra *scope* &mdash; the *part-time professors*. In case that even then an agent is unable to establish at least one negotiation, it notifies the *coordinator* of it's failure with a `NoCounterpartFound` message.
+
+
