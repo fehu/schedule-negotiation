@@ -59,7 +59,7 @@ Terminology
 - A **discipline** is an *abstract* **class** descriptor; the one that the students choose to study.
 - A **class** is a *specific implementation* of a **discipline**, that has *time*, a *group*, a *professor* and a *class room* assigned.
 - An agent's **scope** is a set of agents, that can be comunicated with.
-- ![discipline-priority](https://latex.codecogs.com/png.latex?{\\mathrm{discipline~priority}~ =~\\frac{\\sum \\mathrm{professors}~|~\\mathrm{can~teach}~\\mathbf{discipline}}{\\sum \\mathrm{groups}~|~\\mathrm{chose}~\\mathbf{discipline}}})
+- ![discipline-priority](https://latex.codecogs.com/png.latex?{\\mathrm{discipline~priority}~ =~\\frac{\\sum \\mathrm{groups}~|~\\mathrm{chose}~\\mathbf{discipline}}{\\sum \\mathrm{professors}~|~\\mathrm{can~teach}~\\mathbf{discipline}}})
 
   **TO DO**: the *discipline priority* should be dynamic.
 
@@ -151,6 +151,16 @@ On receive of such message, the agent's response is based on whether he can or c
 Interracts with groups' decision partial functions `handleNewNegotiations`.
 
 #### Handle Negotiation Start
+
+This function is responsible only for calculating *discipline priority* and passing it to the *groups*, thus begining the negotiation for *classes* *time*.
+
+1. Every time a `CounterpartsFound` message is received, it's guarded by the agent. 
+2. This repeats until the message has been received from all the negotiations' counterparts. 
+3. The agent ensures that a number of found counterparts is the same for each group with the same *discipline*.
+4. It calculates the *discipline priority* by dividing the number of it's own negotiations with groups by the number of counterparts, reported by *groups*.
+5. Notifies the counterpart of each negotiation with the corresponding *priority discipline*.
+
+Interracts with groups' decision partial functions `handleNewNegotiations` and `handleMessage`.
 
 #### Handle Negotiation
 
