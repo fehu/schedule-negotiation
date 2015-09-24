@@ -158,14 +158,21 @@ This function is responsible only for calculating *discipline priority* and pass
 2. This repeats until the message has been received from all the negotiations' counterparts. 
 3. The agent ensures that a number of found counterparts is the same for each group with the same *discipline*.
 4. It calculates the *discipline priority* by dividing the number of it's own negotiations with groups by the number of counterparts, reported by *groups*.
-5. Notifies the counterpart of each negotiation with the corresponding *priority discipline*.
+5. Notifies the counterpart of each negotiation with the corresponding *priority discipline* by sending `DisciplinePriorityEstablished` messages.
 
 Interracts with groups' decision partial functions `handleNewNegotiations` and `handleMessage`.
 
 #### Handle Negotiation
 
-#### Goal Achivement
+This `PartialFunction` handles the negotiation over *class*(es) *time*.
 
+- On receive of a `ClassesProposalMessage` message, the agent assesses it's utility and responds with
+  * `ClassesAcceptance`, if the utility is higher than `utilityAcceptanceThreshold`;
+  * `ClassesRejection`, otherwise.
+- On receive of a `ClassesAcceptance` message, the agent tries to guard it into it's `timetable`. If it fails, responds with a `ClassesCounterProposal`. (**TO DO:** not implemented yet)
+
+#### Goal Achivement
+**TO DO:** not implemented yet
 
 Common Definitions
 ------------------
