@@ -107,6 +107,30 @@ The logic is pretty straight forward.
 
 #### Group's Goal Achivement
 
-The *goal achivement* is the **ratio of** the sum of assigned classes *lengths* **to** the sum of the required ones. **If** the *ratio* > 1, **return** 0.
-It is ensured that all the *classes* have the right *discipline*.
+The *goal achivement* is the **ratio of** the sum of assigned classes *lengths* **to** the sum of the required ones.
+ * **If** the *ratio* > 1, **return** 0.
+ * It is ensured that all the *classes* have the right *discipline*.
+ * Recieves the information from a *goal holder*.
 
+- the *goal holder* is implemented with `MutableTimetable`;
+- uses [implicit](http://docs.scala-lang.org/tutorials/tour/implicit-parameters.html) `timeDescriptor`.
+
+Professor Agent
+---------------
+
+
+Common Definitions
+------------------
+
+#### Utility
+
+The *utility* is a mean to assess *proposals*. It is calculated based on 
+- the *proposal*;
+- the negotiation time;
+- current *goal holder*; is implemented with `MutableTimetable`;
+
+1. Ensure that the *proposal* satisfies *timetable* constraints. If not, return 0.
+2. Calculate *&Delta;goal*:
+   * [Assume](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.AgentUtility@assumeProposal(gh:AgentUtility.this.GoalHolder,proposal:AgentUtility.this.ProposalType):AgentUtility.this.GoalHolder) *proposal* and calculate the resulting *goal* value.
+   *  Subtract the *goal* value for the current state from the assumed one.
+3. If the *&Delta;goal* > 0, multiply it with a sum of the [weightedPriority](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.AgentUtility@weightedPriority(proposal:AgentUtility.this.ProposalType):Double) and [preference](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.AgentUtility@preference(time:AgentPreferences.this.NegotiationTime,gh:AgentPreferences.this.GoalHolder,proposal:AgentPreferences.this.ProposalType):feh.util.InUnitInterval). Else return 0.
