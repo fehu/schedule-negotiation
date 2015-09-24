@@ -123,6 +123,7 @@ Common Definitions
 ------------------
 
 #### Utility
+[[scaladoc](http://fehu.github.io/schedule-negotiation/docs/dev-api/index.html#feh.tec.agents.schedule.UtilityDriven@inheritance-diagram), [source](/src/main/scala/feh/tec/agents/schedule/UtilityDriven.scala)]
 
 The *utility* is a mean to assess *proposals*. It is calculated based on 
 - the *proposal*;
