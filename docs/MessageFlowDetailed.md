@@ -28,7 +28,7 @@ Composes this partial function with a fallback partial function which
 gets applied where this partial function is not defined.
 </blockquote>
 
-It is used widely used on the diagram.
+It is widely used on the diagram.
 
 Terminology
 -----------
