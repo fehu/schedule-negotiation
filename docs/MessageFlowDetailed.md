@@ -136,7 +136,7 @@ A *professor* agent represent a university professor. In the current implementat
 
 ---
 
-Currently a *professor*'s behaTviour is described by three partial functions:
+Currently a *professor*'s behaviour is described by three partial functions:
 
  - `handleNewNegotiation` (`handleNegotiationPropositions` in the code)
  - `handleNegotiationStart`
