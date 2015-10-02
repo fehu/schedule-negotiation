@@ -198,7 +198,7 @@ Coordinator Agent
 
 TBD
 
-References:
+References
 ----------
 #### Agents: CSP (DSCP)
 - Makoto Yokoo, Toru Ishida, Edmund H. Durfee, Kazuhiro Kuwabara. "The Distributed Constraint
