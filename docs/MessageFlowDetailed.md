@@ -197,3 +197,34 @@ Coordinator Agent
 -----------------
 
 TBD
+
+References:
+----------
+#### Agents: CSP (DSCP)
+- Makoto Yokoo, Toru Ishida, Edmund H. Durfee, Kazuhiro Kuwabara. "The Distributed Constraint
+Satisfaction Problem: Formalization and Algorithms". IEEE TRANSACTIONS ON KNOWLEDGE AND DATA ENGINEERING, VOL. 10, NO. 5, SEPTEMBERiOCTOBEiR 1998. p. 673-685.
+- Makoto Yokoo, Katsutoshi Hirayama. "Distributed Constraint Satisfaction Algorithm for Complex Local Problems". 1998 IEEE.
+- Najla Sassi, Khaled Ghédira, Kais Ben Salah. "Using Multi-Agent System to solve Distributed Constraint Optimization Problems". 2014 IEEE.
+- Raziyeh Moghaddas, Eghbal Mansoori, Ali Hamzeh. "A New Multi-Agent Algorithm for Solving Constraint Satisfaction Problems". 2013 IEEE.
+- Jing Liu, Weicai Zhong, and Licheng Jiao. "A Multiagent Evolutionary Algorithm for Constraint Satisfaction Problems". 2006 IEEE.
+
+#### (University) Scheduling
+- Jong Yih Kuo, Hsuan-Kuei Cheng, Yong-Yi FanJiang, Shang-Pin Ma. "Multi-Agent Automatic Negotiation and Argumentation for Courses Scheduling". 2011 IEEE.
+- A. Gîrbea, C. Suciu, F. Sisak. "Design and implementation of a fully automated planner-scheduler constraint satisfaction problem". 2011 IEEE.
+- Makoto Ohki, Akio Morimoto, Kosuke Miyake. "Nurse Scheduling by Using Cooperative GA with Efficient Mutation and Mountain-Climbing Operators". 2006 IEEE.
+- Qi Kang, Hui Xiao, Lei Wang, Qidi Wu. "A Swarm-Dynamic Scheduling Method for Semiconductor Assembly Production Line". 2008 IEEE.
+- Antariksha Bhaduri. "University Time Table Scheduling using Genetic Artificial Immune Network". 2009 IEEE.
+- Sehraneh Ghaemi, Mohammad Taghi Vakili, Ali Aghagolzadeh. "USING A GENETIC ALGORITHM OPTIMIZER TOOL TO SOLVE
+UNIVERSITY TIMETABLE SCHEDULING PROBLEM". 2007 IEEE.
+- Adalet Oner, Sel Ozcan, Derya Dengi. "Optimization Of University Course Scheduling Problem With A Hybrid Artificial Bee Colony Algorithm". 2011 IEEE.
+- YuZheng, lingfa Liu. "A Novel Quantum-inspired Genetic Algorithm For a Weekly University Scheduling Optimization". 2011 IEEE.
+- Mohammed Aldasht, Mahmoud Alsaheb, Safa Adi, Mohammad Abu Qopita. "University Course Scheduling Using Evolutionary Algorithms". 2009 IEEE.
+- Ayed. A. Salman, Suha A. Hamdan. "Solving Department's Course-scheduling Problem using Differential Evolution". International Conference on Methodsand Models in ComputerScience, 2009.
+
+#### Other CSP (DSCP) solving methods
+- Mohamed ETTAOUIL, Khalid HADDOUCH, Youssef HAMI, LOQMAN Chakir. "Neural networks approach for solving the Maximal
+Constraint Satisfaction Problems". 2013 IEEE.
+- Kazunori Mizuno, Daiki Hayakawa, Hitoshi Sasaki, Seiichi Nishihara. "Solving Constraint Satisfaction Problems by ACO with Cunning Ants". 2011 IEEE.
+- Hrishikesh J. Goradia. "Ants with Limited Memory for Solving Constraint Satisfaction Problems". 2013 IEEE.
+- José C. Ortiz-Bayliss, Hugo Terashima-Marín, Santiago E. Conant-Pablos. "Using Learning Classifier Systems to Design
+Selective Hyper-Heuristics for Constraint Satisfaction Problems". 2013 IEEE.
