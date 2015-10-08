@@ -54,7 +54,7 @@ Preference Description
 
 The preference mechanism is intended to be used by the people, represented in the negotiation by corresponding agents.
 
-This requires development of a expressively powerful _domain specific language_ (DSL) for the users to describe their preferences. 
+This requires development of an expressively powerful _domain specific language_ (DSL) for the users to describe their preferences. 
 
 The preference function must be generatd internally from thr description in order to avoid invalid functions
 (or there must be a user-provided functions analysis mechanizm).
