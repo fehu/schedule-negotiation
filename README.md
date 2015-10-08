@@ -10,11 +10,9 @@ This project implements agents negotiation with goal of forming university sched
 
 The participating agents are representing three different real-world parties: 
 
-students or groups,
-
-professors,
-
-classrooms.
+1. students or groups,
+2. professors,
+3. classrooms.
 
 Each participant has it's own timetable and the set of all participants' timetables is the schedule.
 
