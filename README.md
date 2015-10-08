@@ -21,7 +21,26 @@ The negotiation process is based on asynchronous immutable messages with no guar
 
 ---
 
-Uses [MongoDB](https://www.mongodb.org/). 
+The negotiation goals are:
+
+  1. Forming _groups_ of _students_ for each _discipline_ (except special case of pre-formed groups).
+  2. Finding the best suiting _professor_ to teach each _group_, thus forming an _unplaced class_.
+  3. Finding a suitable _classroom_ for each _unplaced class_, thus forming _class_.
+
+Negotiation features:
+ - [x] Asynchronous immutable message communication.
+   - [x] awaiting responses for certain messages;
+   - [x] delay for not expected messages (fallen out of order);
+   - [x] agents _roles_ system;
+   - [x] updatable _scopes_ (known counterparts);
+   - [ ] network communication.
+ - [x] Multiple simultaneous negotiation support.
+   - [x] isolated negotiation variables;
+   - [x] shared negotiation variables.
+ - [x] Distributed logging support.
+   - [x] write into [MongoDB](https://www.mongodb.org/).
+ - [ ] [Agents personalization](docs/PersonalizableAgents.md).
+
 
 ---
 
