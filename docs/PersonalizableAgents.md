@@ -14,7 +14,7 @@ The agents are [driven by utility](/src/main/scala/feh/tec/agents/schedule/Utili
 where 
 
 - ![Xi-formula](https://latex.codecogs.com/png.latex?{\\Xi\\ = \\{\\xi_i\\} \\mathrm{-\\, restrictions,}})
-- ![Wp-formula](https://latex.codecogs.com/png.latex?{w_p \\mathrm{-\\, priority weight.}})
+- ![Wp-formula](https://latex.codecogs.com/png.latex?{w_p \\mathrm{-\\, priority~ weight.}})
 
 It's also mentioned in [MessageFlowDetailed](MessageFlowDetailed.md#utility).
 
@@ -41,8 +41,10 @@ Possible preferences:
 
 - Students / Groups:
   - ...
+
 - Professors:
   - ...
+
 - Classrooms
   - occupancy;
   - ...
