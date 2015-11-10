@@ -16,7 +16,7 @@ libraryDependencies += "org.apache.poi" % "poi" % "3.12"
 
 libraryDependencies += "org.apache.poi" % "poi-ooxml" % "3.12"
 
-libraryDependencies += "org.reactivemongo" %% "reactivemongo" % "0.10.5.0.akka23"
+libraryDependencies += "org.reactivemongo" %% "reactivemongo" % "0.11.7"
 
 libraryDependencies += "com.typesafe.play" %% "play-iteratees" % "2.4.0"
 

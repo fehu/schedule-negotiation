@@ -6,7 +6,7 @@ import feh.tec.agents.comm.negotiations.Proposals.NegotiationProposal
 import feh.tec.agents.schedule.Messages.TimetableReport
 import feh.tec.agents.schedule._
 import reactivemongo.api._
-import reactivemongo.api.collections.default.BSONCollection
+import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson._
 
 import scala.collection.immutable.TreeMap
@@ -78,7 +78,7 @@ class ReportDistributedMongoLogger(connection: MongoConnection, timeout: Duratio
   {
     val collection = db.collection[BSONCollection](collectionName)
     val fut = collection.create().map{
-      case true =>
+      _ =>
         val id = SystemAgentId("logger-" + collectionName, ReportDistributedMongoLogger.LoggerRole)
         val logger = ReportDistributedMongoLogger.newLogger(id, collection)
         filter -> logger
