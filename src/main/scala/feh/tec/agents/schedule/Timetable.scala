@@ -9,7 +9,7 @@ class Time protected (val discrete: Int) extends Ordered[Time]{
 }
 
 object Time{
-  def apply(i: Int): Time = new Time(i.ensuring(_ >= 0))
+  def apply(i: Int): Time = new Time(i.ensuring(_ >= 0, "time must be positive, got " + i))
 
   trait Descriptor extends TimeDescriptor[Time]{
     def n: Int
@@ -24,9 +24,11 @@ object Time{
     def ending    = Time(n)
 
     lazy val domain: Stream[Time] = Stream.from(0).map(Time.apply).take(n)
-    
+
+    def minutesToDiscrete(t: Int) = divEnsuringIntegerResult(t, mStep)
+
     def fromMinutesOpt(t: Int): Option[Time] = divEnsuringIntegerResult(t - mBegin, mStep) match {
-      case ok if ok <= n => Some(Time(ok))
+      case ok if ok <= n && ok >= 0 => Some(Time(ok))
       case _ => None
     }
 
@@ -40,7 +42,7 @@ object Time{
     }
   }
   
-  
+
   private def divEnsuringIntegerResult(i1: Int, i2: Int) = {
     assert(i1 % i2 == 0, "i1 % i2 = " + i1 % i2)
     i1 / i2
@@ -76,7 +78,7 @@ class MutableTimetable[T](implicit timeDescr: Time.Descriptor)
       timeDescr.domain.zip(arr).toMap
     }
 
-  def all: Seq[T] = timeTable.flatMap(_._2.withFilter(_.isDefined).map(_.get)).toSeq
+  def all: Seq[T] = timeTable.toStream.flatMap(_._2.withFilter(_.isDefined).map(_.get))
 
   def at(day: DayOfWeek, time: Time): Option[T] = timeTable(day)(time.discrete)
   def at(day: DayOfWeek, from: Time, to: Time): Seq[T] = timeTable(day)

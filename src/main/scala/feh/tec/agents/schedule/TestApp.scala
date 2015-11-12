@@ -8,6 +8,7 @@ import feh.util.Path./
 import feh.util._
 import reactivemongo.api.MongoDriver
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 object TestApp extends App{
@@ -68,11 +69,13 @@ object TestApp extends App{
     professorsPartTime = mkProfessors(professorsPartTime, _.PartTime)
   )
 
+  val maxClasses: Short = 20
+
   private def mkProfessors( profs: Map[(ProfessorId, ProfsCanTeach.IsFullTime), scala.Seq[Discipline]]
                           , role: ProfessorAgent.Role.type => ProfessorAgent.Role
                           ) = profs.toSeq.map{
                               case ((id, _), disciplines) =>
-                                ProfessorAgent.creator(role, id, reportPrinter, disciplines.toSet)
+                                ProfessorAgent.creator(role, id, reportPrinter, disciplines.toSet, maxClasses)
                             }
 
   lazy val controller = CoordinatorAgent.creator(reportPrinter, timeouts, implicitly ,initNegCreators).create("controller")
@@ -82,20 +85,20 @@ object TestApp extends App{
                       ag => {
                         import ag._
                         reportPrinter ! SystemMessage.Start()
-                        Thread.sleep(5200)
+                        Thread.sleep(1000)
                         controller ! SystemMessage.Start()
                         controller ! SystemMessage.Initialize()
-                        Thread sleep 300
+                        Thread sleep 1000
                         controller ! ControllerMessage.Begin()
 
                         val cntrl = ActorRefExtractor(controller).actorRef
-                        asys.scheduler.scheduleOnce(10 seconds span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(5 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
-                        asys.scheduler.scheduleOnce(10 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(1  second  span, cntrl, GroupAgent.StartSearchingProfessors())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(30 minutes span, cntrl, SystemMessage.Stop())(asys.dispatcher)
+                        asys.scheduler.scheduleOnce(50 minutes span, ActorRefExtractor(reportPrinter).actorRef, SystemMessage.Stop())(asys.dispatcher)
 
                       })
   )
 
-  asys.awaitTermination(20.minutes)
+  Await.result(asys.whenTerminated, 90.minutes)
   sys.exit()
 }

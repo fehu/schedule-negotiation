@@ -30,6 +30,8 @@
 - [x] Agents need utility function, that should drive them towards achieving goal (and stop when it is achieved)
 - [ ] Prove utility function is working
 
+- [ ] --- Group agents ---
+- [ ] `lackingMinutes == 0` should render agents idle
 
 - [ ] --- Student agents ---
 - [ ] groups must confirm classes assignations with underlying students

@@ -6,7 +6,6 @@ import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.{Negotiating, NegotiationReactionBuilder}
 import feh.tec.agents.comm.negotiations.Establishing._
 import feh.tec.agents.comm.negotiations.Proposals.Vars.CurrentProposal
-import feh.tec.agents.comm.negotiations._
 import feh.tec.agents.schedule.CommonAgentDefs._
 import feh.tec.agents.schedule.CoordinatorAgent.ExtraScopeResponse
 import feh.tec.agents.schedule.Discipline._
@@ -27,13 +26,12 @@ class GroupAgent( val id                : NegotiatingAgentId
                   )
   extends NegotiatingAgent
   with NegotiationReactionBuilder
-  with CommonAgentDefs
+  with CommonUtilityDrivenDefs
+  with RandomProposalChooser.Group
   with GroupAgentNegotiationPropositionsHandling
   with GroupAgentNegotiating
   with GroupAgentStudentsHandling
-  with UtilityDriven
   with ActorLogging
-  with AgentsTime
 {
 
   type ThisId = GroupId
@@ -42,7 +40,6 @@ class GroupAgent( val id                : NegotiatingAgentId
   type NegotiationTime = AnyRef
   def negotiationTime = null
 
-  protected def weightedPriority(proposal: ProposalType) = negotiation(proposal)(NegVars.DisciplinePriority)
 
   def preference(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType) = 1d // todo
 
@@ -69,10 +66,8 @@ class GroupAgent( val id                : NegotiatingAgentId
     InUnitInterval(if (aC > 1) 0 else aC) // aC max 0
   }
 
-  def assessedThreshold(neg: Negotiation) = 0.7f // todo
+  def assessedThreshold(neg: Negotiation) = 0.7 // todo
 
-  def utilityAcceptanceThreshold(neg: Negotiation)   = assessedThreshold(neg)
-  def utilityAcceptanceThreshold(neg: NegotiationId) = utilityAcceptanceThreshold(negotiation(neg))
 
   // todo: distinct classes and labs
   private def classesDuration(mp: Map[_, Class[Time]]): Map[Class[Time], MinutesPerWeek] = {
@@ -150,8 +145,6 @@ trait GroupAgentNegotiating{
     with ActorLogging =>
 
   def handleMessage = handleNegotiationStart orElse handleNegotiation
-
-  def nextProposalFor(neg: Negotiation): Proposals.Proposal
 
   def negotiationsOver(d: Discipline) = negotiations.map(_._2).filter(_.get(NegVars.Discipline) contains d)
 

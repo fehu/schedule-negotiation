@@ -70,21 +70,23 @@ object Messages {
     extends Proposals.Acceptance
     with ClassesMessage
 
-  case class ClassesRejection[Time]( negotiation : NegotiationId
-                                     , respondingTo : UUID
-                                     , myValues    : Map[Var[Any], Any] = Map.empty
-                                     , uuid        : UUID               = UUID.randomUUID() )
+  case class ClassesRejection[Time]( negotiation       : NegotiationId
+                                     , respondingTo    : UUID
+                                     , myValues        : Map[Var[Any], Any] = Map.empty
+                                     , uuid            : UUID               = UUID.randomUUID()
+                                     , isUnconditional : Boolean            = false  )
                                    (implicit val sender: NegotiatingAgentRef)
     extends Proposals.Rejection
     with ClassesMessage
 
-  case class ClassesCounterProposal[Time] ( negotiation: NegotiationId
-                                          , respondingTo: UUID
-                                          , day: DayOfWeek
-                                          , time: Time
-                                          , length: Int
-                                          , extra: Map[Var[Any], Any] = Map.empty
-                                          , uuid: UUID                = UUID.randomUUID() )
+  case class ClassesCounterProposal[Time] ( negotiation     : NegotiationId
+                                          , respondingTo    : UUID
+                                          , day             : DayOfWeek
+                                          , time            : Time
+                                          , length          : Int
+                                          , extra           : Map[Var[Any], Any] = Map.empty
+                                          , uuid            : UUID               = UUID.randomUUID()
+                                          , isUnconditional : Boolean            = false  )
                                         (implicit val sender: NegotiatingAgentRef)
     extends Proposals.CounterProposal
     with ClassesProposalMessage[Time]

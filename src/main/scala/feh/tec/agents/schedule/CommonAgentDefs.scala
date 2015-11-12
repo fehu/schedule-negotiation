@@ -5,6 +5,7 @@ import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
+import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationAcceptance, NegotiationEstablishingMessage, NegotiationProposition, NegotiationRejection}
 import feh.tec.agents.comm.negotiations.Var
 import feh.tec.agents.schedule.CommonAgentDefs._
@@ -143,3 +144,40 @@ object AgentsTime{
   implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
 }
 
+
+trait TimeConstraints extends AgentsTime{
+  agent: NegotiatingAgent =>
+
+  def timetable: TimeTableRead[Time, Class[Time]]
+
+
+  /** check that there is no class at given time
+    *  ensure that will end before the closing time
+    */
+  def satisfiesConstraints(day: DayOfWeek, time: Time, length: Int): Boolean = {
+    satisfiesConstraints(time, length) && !timetable.busyAt(day, time, tDescr.plus(time, length))
+  }
+
+  /** ensure that will end before the closing time */
+  def satisfiesConstraints(time: Time, length: Int): Boolean = {
+    tDescr.toMinutes(time) + length <= tDescr.toMinutes(tDescr.ending)
+  }
+
+}
+
+
+
+trait CommonUtilityDrivenDefs extends CommonAgentDefs with TimeConstraints with UtilityDriven{
+  agent: NegotiatingAgent with DynamicNegotiations with NegotiationReactionBuilder =>
+
+  def assessedThreshold(neg: Negotiation): Double
+
+
+  protected def weightedPriority(proposal: ProposalType) = negotiation(proposal)(NegVars.DisciplinePriority)
+
+  def satisfiesConstraints(msg: ClassesProposalMessage[Time]): Boolean =
+    satisfiesConstraints(msg.day, msg.time, msg.length)
+
+  def utilityAcceptanceThreshold(neg: Negotiation)   = assessedThreshold(neg)
+  def utilityAcceptanceThreshold(neg: NegotiationId) = utilityAcceptanceThreshold(negotiation(neg))
+}

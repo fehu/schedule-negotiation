@@ -52,6 +52,8 @@ trait TimeDescriptor[Time]{
   def fromMinutesOpt(t: Int): Option[Time]
   def fromMinutes(t: Int): Time = fromMinutesOpt(t).getOrElse(sys.error(s"$t is out of range"))
 
+  def minutesToDiscrete(t: Int): Int
+
   def beginning: Time
   def ending: Time
 

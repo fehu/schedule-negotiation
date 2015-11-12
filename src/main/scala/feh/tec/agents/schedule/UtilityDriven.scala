@@ -1,10 +1,10 @@
 package feh.tec.agents.schedule
 
-import feh.tec.agents.comm.negotiations.Proposals
+import feh.tec.agents.comm.negotiations.{Issues, Proposals}
 import feh.tec.agents.comm.{Negotiation, NegotiatingAgent}
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.schedule.CommonAgentDefs.PutClassesInterface
-import feh.tec.agents.schedule.Messages.{TimetableReport, ClassesMessage, ClassesAcceptance, ClassesProposalMessage}
+import feh.tec.agents.schedule.Messages._
 import feh.util._
 
 trait UtilityDriven extends UtilityDrivenGoal { // with CommonAgentProposalAssessment
@@ -18,11 +18,24 @@ trait UtilityDriven extends UtilityDrivenGoal { // with CommonAgentProposalAsses
 
   protected def currentGoalHolder = timetable
 
-//  protected def acceptProposal(prop: ProposalType) = acceptance(prop, negotiation(prop))
-//  protected def rejectProposal(prop: ProposalType) = counterProposal(prop, negotiation(prop))
+  protected def acceptProposal(prop: ProposalType) = {
+    val neg = negotiation(prop)
+    neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
+    neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time)
+    neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
 
-//  def satisfiesConstraints(prop: ProposalType) =
-//    classesAssessor.satisfies(negotiation(prop)(NegVars.Discipline), prop.length, prop.day, prop.time)
+    ClassesAcceptance[Time](neg.id, prop.uuid)
+  }
+
+  def nextProposalFor(neg: Negotiation): ProposalType
+
+  protected def rejectProposal(prop: ProposalType) = {
+    val neg = negotiation(prop)
+    val p = nextProposalFor(neg)
+    val cprop = ClassesCounterProposal(neg.id, prop.uuid, p.day, p.time, p.length)
+    awaitResponseFor(cprop)
+    cprop
+  }
 
   protected def assess(prop: ClassesProposalMessage[Time], neg: Negotiation) =
     utility(negotiationTime, currentGoalHolder, prop)

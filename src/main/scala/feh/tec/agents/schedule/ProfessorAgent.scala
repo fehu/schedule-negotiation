@@ -15,11 +15,12 @@ class ProfessorAgent( val id        : NegotiatingAgentId
                     , val thisIdVal : ProfessorId
                     , val reportTo  : SystemAgentRef
                     , val canTeach  : Discipline => Boolean
+                    , val maxClasses: Short
                       )
   extends NegotiatingAgent
   with NegotiationReactionBuilder
-  with CommonAgentDefs
-  with UtilityDriven
+  with CommonUtilityDrivenDefs
+  with RandomProposalChooser.Professor
   with ProfessorAgentNegotiationPropositionsHandling
   with ProfessorAgentNegotiatingWithGroup
   with ProfessorAgentNegotiatingForClassRoom
@@ -30,9 +31,26 @@ class ProfessorAgent( val id        : NegotiatingAgentId
   type ThisId = ProfessorId
   def thisIdVar: NegotiationVar {type T = ThisId} = NegVars.ProfessorId
 
+  type NegotiationTime = AnyRef
+  def negotiationTime = null
+
+  def preference(time: NegotiationTime, gh: GoalHolder, proposal: ProposalType) = 1d // todo
+
+
+  def goalAchievement(gh: MutableTimetable[Class[Time]]): InUnitInterval = {
+    val classes = gh.all
+      .groupBy(c => c.discipline -> c.group)
+      .size
+    val goal = classes.toDouble / maxClasses
+    if (goal > 1) 0d
+    else goal
+  }
+
+
+
   def messageReceived: PartialFunction[Message, Unit] = handleNegotiationPropositions orElse handleMessageFromGroups
 
-  def assessedThreshold(neg: Negotiation): Float = 0.7f // todo
+  def assessedThreshold(neg: Negotiation) = 0.7 // todo
 
   protected def negotiationWithId(withAg: NegotiatingAgentRef) = OneToOneNegotiationId(this.id, withAg.id)
 
@@ -56,9 +74,10 @@ object ProfessorAgent{
              , professorId: ProfessorId
              , reportTo   : SystemAgentRef
              , canTeach   : Set[Discipline]
+             , maxClasses : Short
              ) =
     new NegotiatingAgentCreator(role(Role), scala.reflect.classTag[ProfessorAgent],
-      id => _ => new ProfessorAgent(id, professorId, reportTo, canTeach)
+      id => _ => new ProfessorAgent(id, professorId, reportTo, canTeach, maxClasses)
     )
 }
 
