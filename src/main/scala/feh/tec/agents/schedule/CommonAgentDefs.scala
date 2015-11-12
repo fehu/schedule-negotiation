@@ -1,18 +1,15 @@
 package feh.tec.agents.schedule
 
-import akka.actor.ActorLogging
 import feh.tec.agents.comm.Message.HasValues
 import feh.tec.agents.comm.Negotiation.VarUpdated
 import feh.tec.agents.comm.Report.StateChanged
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
-import feh.tec.agents.comm.agent.NegotiationReactionBuilder
 import feh.tec.agents.comm.negotiations.Establishing.{NegotiationAcceptance, NegotiationEstablishingMessage, NegotiationProposition, NegotiationRejection}
-import feh.tec.agents.comm.negotiations.{Proposals, Issues, Var}
+import feh.tec.agents.comm.negotiations.Var
 import feh.tec.agents.schedule.CommonAgentDefs._
 import feh.tec.agents.schedule.Messages._
 import feh.tec.agents.util.OneToOneNegotiation
-import feh.util.InUnitInterval
 
 trait CommonAgentDefs extends AgentsTime with PutClassesInterface{
   agent: NegotiatingAgent with DynamicNegotiations =>
@@ -85,7 +82,6 @@ trait CommonAgentDefs extends AgentsTime with PutClassesInterface{
     }
   }
 
-  def getDecision[T](d: AbstractDecider#Decision[T]): T = d.value.right.map(throw _).merge
 
   def reportTimetable() = reportTo ! TimetableReport(ImmutableTimetable(timetable.asMap))
 
@@ -147,121 +143,3 @@ object AgentsTime{
   implicit val tDescr = Time.descriptor(8*60, 22*60, 30)
 }
 
-
-
-
-
-/** Creating new proposals
-  *
-  */
-
-trait CommonAgentProposalsGeneration extends NegotiatingAgent{
-  agent: CommonAgentDefs =>
-
-  val classesDecider: ClassesBasicPreferencesDecider[Time]
-
-  def nextProposalFor(neg: Negotiation): ClassesProposal[Time] = {
-    import classesDecider._
-
-
-    val d = basedOn(lengthParam -> neg(NegVars.Discipline).classes)
-
-    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
-
-    ClassesProposal(neg.id, getDecision(day), getDecision(time), getDecision(len))
-  }
-
-}
-
-
-/** Evaluating existing proposals
-  *
-  */
-
-trait CommonAgentProposalAssessment extends NegotiatingAgent{
-  agent: CommonAgentDefs with NegotiationReactionBuilder =>
-
-  def assessedThreshold(neg: Negotiation): Float
-
-  val classesAssessor: ClassesBasicPreferencesAssessor[Time]
-
-
-  protected def counterProposal(prop: ClassesProposalMessage[_], neg: Negotiation) = {
-    import classesAssessor._
-    val d = classesAssessor.basedOn(lengthParam -> prop.length)
-    val (day, time, len) = d decide (whatDay_?, whatTime_?, howLong_?)
-    val cprop = ClassesCounterProposal(neg.id, prop.uuid, getDecision(day), getDecision(time), getDecision(len))
-    awaitResponseFor(cprop)
-    cprop
-  }
-  
-  protected def acceptance(prop: ClassesProposalMessage[Time], neg: Negotiation) = {
-    neg.set(Issues.Vars.Issue(Vars.Day))       (prop.day)
-    neg.set(Issues.Vars.Issue(Vars.Time[Time]))(prop.time)
-    neg.set(Issues.Vars.Issue(Vars.Length))    (prop.length)
-    
-    ClassesAcceptance[Time](neg.id, prop.uuid)
-  }
-
-  type HandleClassesProposalMessageResult = Either[ClassesProposalMessage[Time] with Proposals.Rejection, ClassesAcceptance[Time]]
-
-  @deprecated
-  protected def assess( prop: ClassesProposalMessage[Time]
-                      , neg : Negotiation) = classesAssessor.assess(discipline(neg), prop.length, prop.day, prop.time)
-
-  /** Assesses the proposal and guards it in the timetable if it passes.
-   */
-  protected def handleClassesProposalMessage( prop: ClassesProposalMessage[Time]
-                                            , neg_ : Negotiation = null): HandleClassesProposalMessageResult = {
-      val neg = Option(neg_) getOrElse negotiation(prop.negotiation)
-      val a = assess(prop, neg)
-
-      //      log.debug("proposal assessed: " + a)
-
-      if(a > assessedThreshold(neg)) {
-//        log.debug("Acceptance")
-        /*todo: use Confirm message*/
-        putClass(prop) match {
-          case Left(_) => Left(counterProposal(prop, neg))
-          case _       => Right(acceptance(prop, neg))
-        }
-      }
-      else Left(counterProposal(prop, neg))
-
-
-  }
-
-}
-
-object CommonAgentProposal{
-
-  protected trait DefaultDeciderImpl {
-    agent: CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
-
-    class DeciderImpl extends ClassesBasicPreferencesDeciderImplementations[Time]{
-      def basedOn(p: Param[_]*): AbstractDecideInterface =
-        new DecideRandom(p, lengthDiscr = 60, getParam(lengthParam, p).value /*todo: labs*/, timetable, log)
-    }
-  }
-
-  trait DefaultDecider extends DefaultDeciderImpl{
-    agent: CommonAgentProposalsGeneration with CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
-
-    lazy val classesDecider = new DeciderImpl
-  }
-
-  trait DefaultAssessor extends DefaultDeciderImpl{
-    agent: CommonAgentProposalAssessment with CommonAgentDefs with NegotiationReactionBuilder with ActorLogging =>
-
-    lazy val classesAssessor: ClassesBasicPreferencesAssessor[Time] = // todo
-      new DeciderImpl with ClassesBasicPreferencesAssessor[Time]{
-        def assess(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time): InUnitInterval =
-          InUnitInterval(if(satisfies(discipline, length, onDay, at)) 1 else 0)
-
-        def satisfies(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time) =
-          isBusyAt(discipline, length, onDay, at) contains false
-      }
-
-  }
-
-}

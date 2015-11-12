@@ -1,16 +1,15 @@
 package feh.tec.agents.schedule
 
 import akka.actor.ActorLogging
-import feh.tec.agents.comm.negotiations.Establishing.itHasValues
-import feh.tec.agents.comm.negotiations.Issues
-import feh.tec.agents.schedule.Messages._
-import feh.tec.agents.util.{OneToOneNegotiationId, OneToOneNegotiation}
-import feh.util._
-import feh.tec.agents.comm.agent.{NegotiationReactionBuilder, Negotiating}
 import feh.tec.agents.comm._
-import feh.tec.agents.comm.negotiations.Establishing.{NegotiationProposition, NegotiationAcceptance}
+import feh.tec.agents.comm.agent.{Negotiating, NegotiationReactionBuilder}
+import feh.tec.agents.comm.negotiations.Establishing.{NegotiationAcceptance, NegotiationProposition, itHasValues}
+import feh.tec.agents.schedule.CommonAgentDefs._
+import feh.tec.agents.schedule.Messages._
+import feh.tec.agents.util.OneToOneNegotiationId
+import feh.util._
+
 import scala.collection.mutable
-import CommonAgentDefs._
 
 class ProfessorAgent( val id        : NegotiatingAgentId
                     , val thisIdVal : ProfessorId
@@ -20,7 +19,7 @@ class ProfessorAgent( val id        : NegotiatingAgentId
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
-  with CommonAgentProposal.DefaultAssessor
+  with UtilityDriven
   with ProfessorAgentNegotiationPropositionsHandling
   with ProfessorAgentNegotiatingWithGroup
   with ProfessorAgentNegotiatingForClassRoom
@@ -69,8 +68,12 @@ trait ProfessorAgentNegotiatingForClassRoom{
   protected def startSearchingForClassRoom(groupNeg: Negotiation): Unit = {} //todo ???
 }
 
-trait ProfessorAgentNegotiatingWithGroup extends CommonAgentProposalAssessment{
-  agent: NegotiatingAgent with NegotiationReactionBuilder with CommonAgentDefs with ActorLogging =>
+trait ProfessorAgentNegotiatingWithGroup {
+  agent: NegotiatingAgent
+    with NegotiationReactionBuilder
+    with CommonAgentDefs
+    with UtilityDriven
+    with ActorLogging =>
 
   protected def startSearchingForClassRoom(groupNeg: Negotiation)
 

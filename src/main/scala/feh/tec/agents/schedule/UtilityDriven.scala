@@ -7,7 +7,7 @@ import feh.tec.agents.schedule.CommonAgentDefs.PutClassesInterface
 import feh.tec.agents.schedule.Messages.{TimetableReport, ClassesMessage, ClassesAcceptance, ClassesProposalMessage}
 import feh.util._
 
-trait UtilityDriven extends UtilityDrivenGoal with CommonAgentProposalAssessment{
+trait UtilityDriven extends UtilityDrivenGoal { // with CommonAgentProposalAssessment
   agent: NegotiatingAgent with CommonAgentDefs with NegotiationReactionBuilder =>
 
 
@@ -18,18 +18,18 @@ trait UtilityDriven extends UtilityDrivenGoal with CommonAgentProposalAssessment
 
   protected def currentGoalHolder = timetable
 
-  protected def acceptProposal(prop: ProposalType) = acceptance(prop, negotiation(prop))
-  protected def rejectProposal(prop: ProposalType) = counterProposal(prop, negotiation(prop))
+//  protected def acceptProposal(prop: ProposalType) = acceptance(prop, negotiation(prop))
+//  protected def rejectProposal(prop: ProposalType) = counterProposal(prop, negotiation(prop))
 
-  def satisfiesConstraints(prop: ProposalType) =
-    classesAssessor.satisfies(negotiation(prop)(NegVars.Discipline), prop.length, prop.day, prop.time)
+//  def satisfiesConstraints(prop: ProposalType) =
+//    classesAssessor.satisfies(negotiation(prop)(NegVars.Discipline), prop.length, prop.day, prop.time)
 
-  override protected def assess(prop: ClassesProposalMessage[Time], neg: Negotiation) =
+  protected def assess(prop: ClassesProposalMessage[Time], neg: Negotiation) =
     utility(negotiationTime, currentGoalHolder, prop)
 
   /** Assesses the proposal and guards it in the timetable if it passes.
     */
-  override protected def handleClassesProposalMessage(prop: ClassesProposalMessage[Time], neg_ : Negotiation) =
+  protected def handleClassesProposalMessage(prop: ClassesProposalMessage[Time], neg_ : Negotiation) =
     utilityDrivenProposalHandling(prop) match {
       case acc: ClassesAcceptance[Time]                               => putClass(prop).ensuring(_.isRight)
                                                                          Right(acc)

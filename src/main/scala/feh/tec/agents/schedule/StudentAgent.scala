@@ -1,14 +1,12 @@
 package feh.tec.agents.schedule
 
 import akka.actor.ActorLogging
+import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Negotiating.DynamicNegotiations
 import feh.tec.agents.comm.agent.NegotiationReactionBuilder
-import feh.tec.agents.comm._
-import feh.tec.agents.schedule.CommonAgentProposal.DefaultAssessor
-import feh.tec.agents.schedule.Discipline.MinutesPerWeek
 import feh.tec.agents.schedule.io.StudentsSelection
 import feh.tec.agents.util.OneToOneNegotiationId
-import feh.util.{InUnitInterval, UUIDed}
+import feh.util.UUIDed
 
 class StudentAgent( val id          : NegotiatingAgentId
                   , val thisIdVal   : StudentId
@@ -18,9 +16,7 @@ class StudentAgent( val id          : NegotiatingAgentId
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
-//  with CommonAgentProposalAssessment
 //  with UtilityDriven
-//  with DefaultAssessor
   with DynamicNegotiations
   with ActorLogging
 {

@@ -28,9 +28,6 @@ class GroupAgent( val id                : NegotiatingAgentId
   extends NegotiatingAgent
   with NegotiationReactionBuilder
   with CommonAgentDefs
-  with CommonAgentProposalsGeneration
-  with CommonAgentProposalAssessment
-  with CommonAgentProposal.DefaultAssessor
   with GroupAgentNegotiationPropositionsHandling
   with GroupAgentNegotiating
   with GroupAgentStudentsHandling
@@ -72,7 +69,6 @@ class GroupAgent( val id                : NegotiatingAgentId
     InUnitInterval(if (aC > 1) 0 else aC) // aC max 0
   }
 
-  val classesDecider = classesAssessor
   def assessedThreshold(neg: Negotiation) = 0.7f // todo
 
   def utilityAcceptanceThreshold(neg: Negotiation)   = assessedThreshold(neg)
@@ -150,7 +146,7 @@ trait GroupAgentNegotiating{
   agent: NegotiatingAgent
     with NegotiationReactionBuilder
     with CommonAgentDefs
-    with CommonAgentProposalAssessment
+    with UtilityDriven
     with ActorLogging =>
 
   def handleMessage = handleNegotiationStart orElse handleNegotiation
@@ -210,7 +206,7 @@ trait GroupAgentNegotiating{
           noResponsesExpected(msg.negotiation)
       }
     case (msg: ClassesCounterProposal[Time]) suchThat AwaitingResponse() & WithNegotiation(neg) =>
-      val resp = handleClassesProposalMessage(msg)
+      val resp = handleClassesProposalMessage(msg, neg)
       counterpart(neg) ! resp.merge
     case (msg: ClassesMessage) suchThat NotAwaitingResponse() => // do nothing
   }
