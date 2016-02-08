@@ -17,6 +17,8 @@ trait CommonAgentDefs extends AgentsTime with PutClassesInterface{
 
   type Time
 
+  implicit def timeDescriptor: TimeDescriptor[Time]
+
   /** a negotiation that is easily accessed from others negotiations */
   lazy val SharedNegotiation = new SharedNegotiation(varUpdatedNotification) {
     defineVar(NegVars.NewNegAcceptance)
@@ -52,8 +54,8 @@ trait CommonAgentDefs extends AgentsTime with PutClassesInterface{
     }
 
   def isBusyAt(discipline: Discipline, length: Int, onDay: DayOfWeek, at: Time) = {
-    val minutes = tDescr.toMinutes(at) + length
-    tDescr.fromMinutesOpt(minutes).map{ endTime => timetable.busyAt(onDay, at, endTime)}
+    val minutes = timeDescriptor.toMinutes(at) + length
+    timeDescriptor.fromMinutesOpt(minutes).map{ endTime => timetable.busyAt(onDay, at, endTime)}
   }
 
 
@@ -90,8 +92,8 @@ trait CommonAgentDefs extends AgentsTime with PutClassesInterface{
   {
     val neg = negotiation(prop.negotiation)
     val start = prop.time
-    val endT = tDescr.toMinutes(start) + prop.length
-    tDescr.fromMinutesOpt(endT).map{
+    val endT = timeDescriptor.toMinutes(start) + prop.length
+    timeDescriptor.fromMinutesOpt(endT).map{
                                      end =>
                                        val id = ClassId(neg(NegVars.Discipline).code)
                                        val groupId = neg(NegVars.GroupId)
@@ -135,7 +137,7 @@ trait AgentsTime{
 
   type Time = feh.tec.agents.schedule.Time
 
-  implicit def tDescr = AgentsTime.tDescr
+  implicit def timeDescriptor = AgentsTime.tDescr
 
   val timetable = new MutableTimetable[Class[Time]]
 }
@@ -155,12 +157,12 @@ trait TimeConstraints extends AgentsTime{
     *  ensure that will end before the closing time
     */
   def satisfiesConstraints(day: DayOfWeek, time: Time, length: Int): Boolean = {
-    satisfiesConstraints(time, length) && !timetable.busyAt(day, time, tDescr.plus(time, length))
+    satisfiesConstraints(time, length) && !timetable.busyAt(day, time, timeDescriptor.plus(time, length))
   }
 
   /** ensure that will end before the closing time */
   def satisfiesConstraints(time: Time, length: Int): Boolean = {
-    tDescr.toMinutes(time) + length <= tDescr.toMinutes(tDescr.ending)
+    timeDescriptor.toMinutes(time) + length <= timeDescriptor.toMinutes(timeDescriptor.ending)
   }
 
 }

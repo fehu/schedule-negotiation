@@ -82,7 +82,7 @@ trait RandomProposalChooser extends ProposalChooser{
 
   protected def randomDay() = (DaysOfWeek.values - DaysOfWeek.Sun).randomChoice.get
 
-  protected def randomTime(length: Int) = fetchUntil(satisfiesConstraints(_: Time, length), tDescr.randomly)
+  protected def randomTime(length: Int) = fetchUntil(satisfiesConstraints(_: Time, length), timeDescriptor.randomly)
 
   protected def randomLength(lackingMinutes: Int) = possibleLengths(lackingMinutes).randomChoice.get
 
@@ -95,7 +95,7 @@ trait RandomProposalChooser extends ProposalChooser{
     else fetchUntil(cond, it.tail, maxTries - 1)
   }
 
-  protected def lengthDiscr = tDescr.step
+  protected def lengthDiscr = timeDescriptor.step
 
   protected def possibleLengths(totalLength: Int) = {
     assert(totalLength % lengthDiscr == 0, s"discipline minutes $totalLength cannot be divided by $lengthDiscr with integer result")
@@ -114,7 +114,7 @@ object RandomProposalChooser{
       val d = neg(NegVars.Discipline)
 
       val assignedLength = currentGoalHolder.all.size
-      val lackingMinutes = d.classes - assignedLength * tDescr.step
+      val lackingMinutes = d.classes - assignedLength * timeDescriptor.step
 
       randomProposalFor(neg, lackingMinutes)
     }

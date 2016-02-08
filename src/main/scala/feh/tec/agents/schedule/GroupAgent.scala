@@ -71,7 +71,7 @@ class GroupAgent( val id                : NegotiatingAgentId
 
   // todo: distinct classes and labs
   private def classesDuration(mp: Map[_, Class[Time]]): Map[Class[Time], MinutesPerWeek] = {
-    val td = implicitly[TimeDescriptor[Time]]
+    val td = timeDescriptor
     mp.values.groupBy(identity).mapValues(_.size * td.step) // ??
   }
 
