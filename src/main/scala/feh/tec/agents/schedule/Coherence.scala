@@ -42,20 +42,35 @@ trait Coherence extends GCoherence{
     case object Contradicts       extends DiscreteCValue { def value = -1 }
     case object SameClassInstance extends DiscreteCValue { def value = 0  }
 
-    protected trait Context0[C <: Context[C]] extends Context[C]{
+    protected trait GeneratingContext[C <: Context[C]] extends Context[C]{
       self: C =>
 
-      /** Threshold for [[divideInfGraph]]. */
-      def divideGraphThreshold: Double
+      protected implicit def gPartition: GraphPartition[C]
 
       def process = g => Future {
-        divideInfGraph(g :+: defaultGraph, self: C, divideGraphThreshold)
+        divideInfGraph(g :+: defaultGraph, self: C, threshold = 0).toSeq
+      }
+    }
+
+    protected trait FilteringContext[C <: Context[C]] extends Context[C]{
+      self: C =>
+
+      def assessment: CoherenceAssessment
+
+      /** Threshold for the filter. */
+      def filterThreshold: Double
+
+
+      def process = g => Future{
+        val coh = assessment.assessCoherence(self: C, g)
+        if (coh > filterThreshold) ThisSolutionCandidate.ThisSolutionSuccess(g, self: C, coh.excluding0) :: Nil
+        else Nil
       }
     }
 
 
     /** Beliefs context. */
-    class Beliefs extends Context0[Beliefs]{
+    class Beliefs(implicit val gPartition: GraphPartition[Beliefs]) extends GeneratingContext[Beliefs]{
       /** [[Corroborates]] | [[Contradicts]] | [[SameClassInstance]] */
       type Value = DiscreteCValue
 
@@ -66,10 +81,15 @@ trait Coherence extends GCoherence{
       def defaultGraph = newGraph(currentProposals.map(ProposalInf))
 
       /** The only relation: [[TimeConsistence]]. */
-      lazy val binaryRelations: Set[RelationBinary] = Set(new TimeConsistence)
+      lazy val binaryRelationsWithin: Set[RelationBinary] = Set(new TimeConsistence)
+
+      /** Has none. */
+      def binaryRelationsWithDefault = Set()
 
       /** None. */
       def wholeRelations = Set.empty
+
+      def toDouble = _.value.toDouble
 
       /** Time Consistence binary relation. */
       class TimeConsistence extends RelationBinary{
@@ -103,36 +123,38 @@ trait Coherence extends GCoherence{
     }
 
     /** Obligations context.
-      * Requires [[Context.binaryRelations]] and [[Context.wholeRelations]] definition,
+      * Requires [[Context.binaryRelationsWithin]] and [[Context.wholeRelations]] definition,
       *
       * @param defaultGraph graph with <i>obligations information</i>.
       */
-    abstract class Obligations(val defaultGraph: Graph) extends Context0[Obligations]
+    abstract class Obligations(val defaultGraph: Graph)
+                              (implicit val assessment: CoherenceAssessment) extends FilteringContext[Obligations]
     {
       type FailDescription
 
       /** Corroborates: `true`|`false`, maybe description (if Contradicts). */
-      type Value = (Boolean, Some[FailDescription])
+      type Value = Option[(Boolean, Some[FailDescription])]
 
       /** The threshold is 0. */
-      def divideGraphThreshold = 0
+      def filterThreshold = 0
     }
 
 
     /** Preferences context.
-      * Requires [[Context.binaryRelations]] and [[Context.wholeRelations]] definition,
+      * Requires [[Context.binaryRelationsWithin]] and [[Context.wholeRelations]] definition,
       *
       * @param defaultGraph graph with <i>preferences information</i>.
       * @param preferencesThreshold get <i>preferences threshold</i>.
       */
     abstract class Preferences(val defaultGraph: Graph,
-                               preferencesThreshold: () => Double) extends Context0[Preferences]
+                               preferencesThreshold: () => Double)
+                              (implicit val assessment: CoherenceAssessment) extends FilteringContext[Preferences]
     {
       /** Preference value is within (0, 1]. */
-      type Value = InUnitInterval.Excluding0
+      type Value = Option[InUnitInterval.Excluding0]
 
       /** See [[preferencesThreshold]] constructor argument. */
-      def divideGraphThreshold = preferencesThreshold()
+      def filterThreshold = preferencesThreshold()
     }
 
 
@@ -140,7 +162,9 @@ trait Coherence extends GCoherence{
       *
       * @param satisfactionThreshold get <i>satisfaction threshold</i>.
       */
-    class External (val satisfactionThreshold: () => Double) extends Context0[External]{
+    class External (val satisfactionThreshold: () => Double)(implicit val assessment: CoherenceAssessment)
+      extends FilteringContext[External]
+    {
       /** counterpart's ID, [the graph's node, coherence value, some info.]. */
       type Value = (AgentId, List[(InformationPiece, InUnitInterval, Any)])
 
@@ -148,7 +172,10 @@ trait Coherence extends GCoherence{
       def defaultGraph = emptyGraph
 
       /** No binary relations. */
-      def binaryRelations = Set.empty
+      def binaryRelationsWithin = Set.empty
+
+      /** Has none. */
+      def binaryRelationsWithDefault = Set()
 
       /** The only relation: [[ExternalOpinion]]. */
       lazy val wholeRelations: Set[RelationWhole] = Set(new ExternalOpinion)
@@ -161,8 +188,9 @@ trait Coherence extends GCoherence{
       }
 
       /** See [[satisfactionThreshold]] constructor argument. */
-      def divideGraphThreshold = satisfactionThreshold()
+      def filterThreshold = satisfactionThreshold()
 
+      def toDouble = _._2.map(_._2).product
     }
 
     /** Intentions context.
