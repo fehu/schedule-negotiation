@@ -1,4 +1,5 @@
-package feh.tec.agents.schedule
+package feh.tec.agents.schedule2
+
 
 case class Discipline(code: String, name: String, classes: Discipline.MinutesPerWeek, labs: Discipline.MinutesPerWeek){
   override def equals(obj: scala.Any) = canEqual(obj) && (obj match {
@@ -30,7 +31,9 @@ trait EntityId{
 
 case class ClassId(uniqueId: String) extends EntityId
 
-case class StudentId  (tag: String, career: StudentAgent.Career) extends EntityId{
+
+case class Career(name: String, code: String)
+case class StudentId  (tag: String, career: Career) extends EntityId{
   def uniqueId = tag
 }
 case class GroupId    (uniqueId: String) extends EntityId
@@ -41,7 +44,7 @@ object ClassRoomId{
   object Unassigned extends ClassRoomId("--")
 } 
 
-trait TimeDescriptor[Time]{
+trait TimeDescriptor[Time] extends Ordering[Time]{
   def domain: Stream[Time]
 
   def randomly: Stream[Time]
@@ -58,6 +61,7 @@ trait TimeDescriptor[Time]{
   def ending: Time
 
   def plus(t1: Time, t2: Int): Time = fromMinutes(toMinutes(t1) + t2)
+  def plus(t1: Time, t2: Time): Time = fromMinutes(toMinutes(t1) + toMinutes(t2))
 
   def humanReadable(t: Time): String
   def hr(t: Time): String = humanReadable(t)
