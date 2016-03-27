@@ -42,8 +42,8 @@ case class OpinionMsg(value: Set[ConcreteProposal[_]])(implicit _sender: Negotia
 
 
 
-case class CoherenceMsg(value: InUnitInterval)(implicit _sender: NegotiatingAgentRef)
-  extends AMessage[InUnitInterval]("Coherence") //with ResponseMsg , respondingTo: UUID
+case class CoherenceMsg(value: Coherence.SomeSolutionCandidate)(implicit _sender: NegotiatingAgentRef)
+  extends AMessage[Coherence.SomeSolutionCandidate]("Coherence") //with ResponseMsg , respondingTo: UUID
 
 case class YesNoMsg(value: Boolean)(implicit _sender: NegotiatingAgentRef)
   extends AMessage[Boolean]("Coherence") //with ResponseMsg , respondingTo: UUID

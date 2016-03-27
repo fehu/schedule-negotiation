@@ -6,36 +6,35 @@ import akka.util.Timeout
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Coherence.GraphImplementation
 import feh.tec.agents.comm.agent.{AgentActor, Coherence => GCoherence}
+import feh.tec.agents.schedule2.Coherence.Contexts.Intentions
 import feh.tec.agents.schedule2.ExternalKnowledge.{AnyProposal, ClassProposal, ConcreteProposal}
 import feh.tec.agents.schedule2.InternalKnowledge.{Capacity, Preference, Obligation}
-import feh.util.InUnitInterval
+import feh.util._
 
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.ClassTag
 
-/** University schedule negotiating agent coherence integration. */
-trait Coherence extends GCoherence{
-  agent: AgentActor =>
-
-  /** Agent's action. */
-  type Action
-
-  type Time
-
-  implicit def timeDescriptor: TimeDescriptor[Time]
-
-//  protected implicit def coherenceExecContext: ExecutionContext
+/** University schedule negotiating coherence definition. */
+object Coherence extends GCoherence with GraphImplementation{
 
   type InformationPiece = ClassesRelatedInformation
 
 
-//  /** Set of current proposals. @see [[contexts.Beliefs.defaultGraph]]. */
-  protected def currentProposals: Future[Set[AnyProposal]]
+  trait AgentInterface{
+//    implicit def execContext: ExecutionContext
 
-  /** See [[Contexts.External.ExternalOpinion]]. */
-  protected def askCounterpartsOpinion(over: Graph): Future[Contexts.External#Value]
+    def innerCmdTimeout: Timeout
+
+    def externalTimeout: Timeout
+
+    /** Set of current proposals. @see [[Contexts.Beliefs.defaultGraph]]. */
+    def currentProposals: Future[Set[AnyProposal]]
+
+    /** See [[Contexts.External.ExternalOpinion]]. */
+    def askCounterpartsOpinion(over: Graph): Future[Contexts.External#Value]
+  }
 
 
   object Contexts{
@@ -49,32 +48,44 @@ trait Coherence extends GCoherence{
     protected trait GeneratingContext[C <: Context[C]] extends Context[C]{
       self: C =>
 
+      implicit def assessment: CoherenceAssessment
+
       protected implicit def gPartition: GraphPartition[C]
 
       def process = g => Future {
         divideInfGraph(g :+: defaultGraph, self: C, threshold = 0).toSeq
       }
+
+      def assess(g: Input): ThisSolutionCandidate[C] = processFiltering(self: C, g, 0)
     }
 
     protected trait FilteringContext[C <: Context[C]] extends Context[C]{
       self: C =>
 
-      def assessment: CoherenceAssessment
+      implicit def assessment: CoherenceAssessment
 
       /** Threshold for the filter. */
       def filterThreshold: Double
 
 
-      def process = g => Future{
-        val coh = assessment.assessCoherence(self: C, g)
-        if (coh > filterThreshold) ThisSolutionCandidate.ThisSolutionSuccess(g, self: C, coh.excluding0) :: Nil
-        else Nil
-      }
+      def process = g => Future{ processFiltering(self: C, g, filterThreshold) :: Nil }
+    }
+
+    protected def processFiltering[C <: Context[C]](c: C, g: C#Input, filterThreshold: Double )
+                                                   (implicit assessment: CoherenceAssessment): ThisSolutionCandidate[C] =
+    {
+      val coh = assessment.assessCoherence(c, g)
+      if (coh.doubleValue > filterThreshold) ThisSolutionCandidate.ThisSolutionSuccess(g, c, coh.excluding0)
+      else ThisSolutionCandidate.ThisSolutionFailure(g, c, null) // todo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
 
     /** Beliefs context. */
-    class Beliefs(innerCmdTimeout: FiniteDuration)(implicit val gPartition: GraphPartition[Beliefs]) extends GeneratingContext[Beliefs]{
+    class Beliefs[Time](ag: AgentInterface)(implicit val gPartition: GraphPartition[Beliefs[Time]],
+                                            val ex: ExecutionContext,
+                                            val assessment: CoherenceAssessment)
+      extends GeneratingContext[Beliefs[Time]]
+    {
       /** [[Corroborates]] | [[Contradicts]] | [[SameClassInstance]] */
       type Value = DiscreteCValue
 
@@ -82,7 +93,7 @@ trait Coherence extends GCoherence{
       def divideGraphThreshold = 0
 
       /** The current proposals. */
-      def defaultGraph = Await.result(currentProposals.map(newGraph), innerCmdTimeout)
+      def defaultGraph = Await.result(ag.currentProposals.map(newGraph), ag.innerCmdTimeout.duration + 10.millis)
 
       /** The only relation: [[TimeConsistence]]. */
       lazy val binaryRelationsWithin: Set[RelationBinary] = Set(new TimeConsistence)
@@ -114,18 +125,19 @@ trait Coherence extends GCoherence{
 
     }
 
+    trait ObligationFailed { def message: String }
+
     /** Obligations context.
       * Requires [[Context.binaryRelationsWithin]] and [[Context.wholeRelations]] definition,
       *
       * @param defaultGraph graph with <i>obligations information</i>.
       */
     abstract class Obligations(val defaultGraph: Graph)
-                              (implicit val assessment: CoherenceAssessment) extends FilteringContext[Obligations]
+                              (implicit val assessment: CoherenceAssessment, val ex: ExecutionContext)
+      extends FilteringContext[Obligations]
     {
-      type FailDescription
-
       /** Corroborates: `true`|`false`, maybe description (if Contradicts). */
-      type Value = Option[(Boolean, FailDescription)]
+      type Value = Option[(Boolean, Option[ObligationFailed])]
 
       /** The threshold is 0. */
       def filterThreshold = 0
@@ -142,8 +154,9 @@ trait Coherence extends GCoherence{
       * @param preferencesThreshold get <i>preferences threshold</i>.
       */
     abstract class Preferences(val defaultGraph: Graph,
-                               preferencesThreshold: () => Double)
-                              (implicit val assessment: CoherenceAssessment) extends FilteringContext[Preferences]
+                               preferencesThreshold: () => InUnitInterval.Including)
+                              (implicit val assessment: CoherenceAssessment,
+                               val ex: ExecutionContext) extends FilteringContext[Preferences]
     {
       /** Preference value is within (0, 1]. */
       type Value = Option[InUnitInterval.Excluding0]
@@ -159,12 +172,12 @@ trait Coherence extends GCoherence{
       *
       * @param satisfactionThreshold get <i>satisfaction threshold</i>.
       */
-    class External (val satisfactionThreshold: () => Double, externalTimeout: FiniteDuration)
-                   (implicit val assessment: CoherenceAssessment)
+    class External (ag: AgentInterface, val satisfactionThreshold: () => InUnitInterval.Including)
+                   (implicit val assessment: CoherenceAssessment, val ex: ExecutionContext)
       extends FilteringContext[External]
     {
       /** counterpart's ID, [the graph's node, coherence value, some info.]. */
-      type Value = Map[NegotiatingAgentId, InUnitInterval] // (AgentId, List[(InformationPiece, InUnitInterval, Any)])
+      type Value = Map[NegotiatingAgentId, Coherence.SomeSolutionCandidate] // (AgentId, List[(InformationPiece, InUnitInterval, Any)])
 
       /** No default graph. */
       def defaultGraph = emptyGraph
@@ -178,27 +191,31 @@ trait Coherence extends GCoherence{
       /** The only relation: [[ExternalOpinion]]. */
       lazy val wholeRelations: Set[RelationWhole] = Set(new ExternalOpinion)
 
-      /** The external opinion is asked using [[askCounterpartsOpinion]].
+      /** The external opinion is asked using [[ag.askCounterpartsOpinion]].
         * It is the main reason the context's [[Context.Result]] type is a [[Future]].
         */
       class ExternalOpinion extends RelationWhole{
-        def apply(v1: Graph) = Await.result(askCounterpartsOpinion(v1), externalTimeout)
+        def apply(v1: Graph) = Await.result(ag.askCounterpartsOpinion(v1), ag.externalTimeout.duration + 10.millis)
       }
 
       /** See [[satisfactionThreshold]] constructor argument. */
-      def filterThreshold = satisfactionThreshold()
+      def filterThreshold = satisfactionThreshold().d
 
-      def toDouble = Option apply _.values.product // _._2.map(_._2).product
+      def toDouble = input => Some apply (0d /: input.values.map((_: SomeSolutionCandidate).get)) {
+        case (acc, SolutionSuccess(_, _, v0, prev)) => acc + v0.d * prev.map(_.v.d).product
+        case (_, _: SolutionFailure[_]) => 0d
+      } / input.size
+//        Option apply _.values.product // _._2.map(_._2).product
     }
 
     /** Intentions context.
       * Accumulates the [[SolutionCandidate]]s in order to select the next action.
       */
-    class Intentions extends AccumulatingContextImpl[Intentions] {
+    abstract class Intentions extends AccumulatingContextImpl[Intentions] {
       type Input = SolutionCandidate[_]
-      type AResult = Action
+      type AResult = Boolean // Unit
 
-      def processAccumulated() = ??? // todo
+//      def processAccumulated() = ??? // todo
     }
 
   }
@@ -206,7 +223,7 @@ trait Coherence extends GCoherence{
 }
 
 /** Agent implementation, based on coherence concept. Handler thread. */
-trait CoherenceDrivenAgent extends Agent with Coherence{
+trait CoherenceDrivenAgent extends Agent with Coherence.AgentInterface{
 
   /** Main thread: coherence evaluation and acction selection. */
   protected val main: ActorRef
@@ -229,12 +246,12 @@ trait CoherenceDrivenAgent extends Agent with Coherence{
 
 }
 
-trait CoherenceDrivenInterface[C <: Coherence]{
+trait CoherenceDrivenInterface[Time]{
   /** Get opinion about a sub-graph. */
-  def opinionAbout(g: C#Graph): InUnitInterval
+  def opinionAbout(g: Coherence.Graph): Future[Coherence.SomeSolutionCandidate]
 
   /** Check [[feh.tec.agents.schedule2.InternalKnowledge.Capacity]]. */
-  def canBeAccepted(prop: ConcreteProposal[C#Time]): Boolean
+  def canBeAccepted(prop: ConcreteProposal[Time]): Boolean
 
   /** Check [[feh.tec.agents.schedule2.InternalKnowledge.Capacity]]. */
   def canBeAccepted(value: Discipline, nStudents: Int): Boolean
@@ -243,21 +260,21 @@ trait CoherenceDrivenInterface[C <: Coherence]{
     *
     * @return satisfied
     */
-  def makeDecision(): Boolean
+  def makeDecision(timeout: Timeout): Boolean
 
-  def mkGraph(nodes: Set[C#InformationPiece]): C#Graph
+  def mkGraph(nodes: Set[Coherence.InformationPiece]): Coherence.Graph
 }
 
 object CoherenceDrivenAgent{
   sealed trait CInterfaceActor extends Actor
 
-  class Main[C <: Coherence](c: CoherenceDrivenInterface[C]) extends CInterfaceActor{
+  class Main[Time](c: CoherenceDrivenInterface[Time], decisionMakingTimeout: Timeout) extends CInterfaceActor{
     var waiting = false
 
     def receive = {
       case Command.MakeDecision =>
         waiting = false
-        if(c.makeDecision()) waiting = true
+        if(c.makeDecision(decisionMakingTimeout)) waiting = true
         else self ! Command.MakeDecision
 
       case Command.Finished_? => sender() ! waiting
@@ -266,12 +283,12 @@ object CoherenceDrivenAgent{
 
 
   /** Manages agent's known proposals. */
-  class Proposals[C <: Coherence](c: CoherenceDrivenInterface[C])(implicit aRef: NegotiatingAgentRef) extends CInterfaceActor{
-    val proposals = mutable.HashSet.empty[ConcreteProposal[C#Time]]
+  class Proposals[Time](c: CoherenceDrivenInterface[Time])(implicit aRef: NegotiatingAgentRef) extends CInterfaceActor{
+    val proposals = mutable.HashSet.empty[ConcreteProposal[Time]]
     val counterparts = mutable.HashMap.empty[Discipline, mutable.HashSet[NegotiatingAgentRef]]
 
     def receive = {
-      case ClassProposalMsg(prop: ConcreteProposal[C#Time]) => sender() ! YesNoMsg(c.canBeAccepted(prop))
+      case ClassProposalMsg(prop: ConcreteProposal[Time]) => sender() ! YesNoMsg(c.canBeAccepted(prop))
       case ClassProposalMsg(_)                              => sender() ! NotEnoughInfo
 
       case msg: AbstractProposalMsg =>
@@ -280,20 +297,24 @@ object CoherenceDrivenAgent{
         sender() ! YesNoMsg(can)
 
 
-      case Command.AddProposal(prop) => proposals += prop.asInstanceOf[ConcreteProposal[C#Time]]
+      case Command.AddProposal(prop) => proposals += prop.asInstanceOf[ConcreteProposal[Time]]
       case Command.GetProposals      => sender() ! c.mkGraph(proposals.toSet)
       case Command.GetCounterpartsCount(discipline, role) =>
         sender() ! counterparts.get(discipline).map(_.count(_.id.role == role)).getOrElse(0)
     }
   }
 
-  class Opinions[C <: Coherence](c: CoherenceDrivenInterface[C])(implicit aRef: NegotiatingAgentRef) extends CInterfaceActor{
+  class Opinions[Time](c: CoherenceDrivenInterface[Time])(implicit aRef: NegotiatingAgentRef, exc: ExecutionContext)
+    extends CInterfaceActor
+  {
     def receive = {
-      case OpinionMsg(props) => sender() ! CoherenceMsg(c.opinionAbout(c.mkGraph(props.asInstanceOf[Set[C#InformationPiece]])))
+      case OpinionMsg(props) => c.opinionAbout(c.mkGraph(props.asInstanceOf[Set[Coherence.InformationPiece]])) map {
+        c => sender() ! CoherenceMsg(c)
+      }
     }
   }
 
-  class Argue[C <: Coherence](c: CoherenceDrivenInterface[C]) extends CInterfaceActor{
+  class Argue[Time](c: CoherenceDrivenInterface[Time]) extends CInterfaceActor{
     def receive = Map.empty // todo
   }
 
@@ -305,19 +326,26 @@ case class Knowledge(capacities: Set[Capacity],
                      obligations: Set[Obligation],
                      preferences: Set[Preference])
 
-abstract class CoherenceDrivenAgentImpl(
-                               val id: NegotiatingAgentId,
-                               implicit val timeDescriptor: TimeDescriptor[DTime],
-                               val reportTo: SystemAgentRef,
-                               internalTimeout: Timeout,
-                               externalTimeout: Timeout,
-                               aFactory: ActorRefFactory,
-                               knowledge: Knowledge)
+
+
+abstract class CoherenceDrivenAgentImpl(aFactory: ActorRefFactory)
   extends CoherenceDrivenAgent
-  with GraphImplementation
   with CoherenceDrivenInterface[CoherenceDrivenAgentImpl]
 {
   cAgent =>
+
+  import Coherence._
+
+  override val id: NegotiatingAgentId
+//  implicit val timeDescriptor: TimeDescriptor[DTime]
+//  val reportTo: SystemAgentRef
+  val internalTimeout: Timeout
+  val externalTimeout: Timeout
+  val decisionMakingTimeout: Timeout
+
+  val internalKnowledge: Knowledge
+
+  val externalSatisfactionThreshold: () => InUnitInterval.Including
 
   import CoherenceDrivenAgent._
 
@@ -334,30 +362,36 @@ abstract class CoherenceDrivenAgentImpl(
 
 
   trait contexts{
-    implicit val cohAssessment = new CoherenceAssessment.CoherenceAssessmentImpl()
-    implicit val graphPartition = new GraphPartition.GraphPartitionByAggregation[Contexts.Beliefs]()
+//    type Obligations <: Contexts.Beliefs[Time]
+//    type Preferences <: Contexts.Preferences
+
+    implicit val cohAssessment = new Coherence.CoherenceAssessment.CoherenceAssessmentImpl()
+    implicit val graphPartition = new Coherence.GraphPartition.GraphPartitionByAggregation[Coherence.Contexts.Beliefs[Time]]()
 
     val obligations: Contexts.Obligations
     val preferences: Contexts.Preferences
 
-    val beliefs = new Contexts.Beliefs(internalTimeout.duration + 10.millis)
-    val external = new Contexts.External(() => 0.5, externalTimeout.duration + 10.millis)
-    val intentions = new Contexts.Intentions
+    val beliefs = new Coherence.Contexts.Beliefs(cAgent)
+    val external = new Coherence.Contexts.External(cAgent, externalSatisfactionThreshold)
+    val intentions = new Intentions {
+      def processAccumulated(): AResult = ??? // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    }
   }
 
   val contexts: contexts
 
   implicit def execContext = aFactory.dispatcher
 
-  protected val main             = aFactory.actorOf(mkProps[Main[_]](cInterface))
+  protected def mainProps = Props(scala.reflect.classTag[Main[_]].runtimeClass, cInterface, decisionMakingTimeout)
+  protected val main             = aFactory.actorOf(mainProps)
   protected val argumentsHandler = aFactory.actorOf(mkProps[Argue[_]](cInterface))
   protected val opinionsHandler  = aFactory.actorOf(mkProps[Opinions[_]](cInterface))
   protected val proposalsHandler = aFactory.actorOf(mkProps[Proposals[_]](cInterface))
 
 
-  /** See [[Contexts.External.ExternalOpinion]]. */
-  protected def askCounterpartsOpinion(over: Graph) = {
-    val props = over.nodes.collect{ case prop: ConcreteProposal[_] => prop }
+  /** See [[Coherence.Contexts.External.ExternalOpinion]]. */
+  def askCounterpartsOpinion(over: Graph) = {
+    val props = over.nodes.collect{ case prop: ConcreteProposal[_] => prop: ConcreteProposal[_] }
     val uniqueCounterparts = props.flatMap(_.sharedBetween) - this.ref
 
     implicit def to = externalTimeout
@@ -367,8 +401,8 @@ abstract class CoherenceDrivenAgentImpl(
     futures.map(_.toMap)
   }
 
-  /** Set of current proposals. @see [[Contexts.Beliefs.defaultGraph]]. */
-  protected def currentProposals = (proposalsHandler ? Command.GetProposals)(internalTimeout).mapTo
+  /** Set of current proposals. @see [[Coherence.Contexts.Beliefs.defaultGraph]]. */
+  def currentProposals = (proposalsHandler ? Command.GetProposals)(internalTimeout).mapTo
 
 
   val Reporting = new ReportingConfig(false, false, false)
@@ -378,12 +412,12 @@ abstract class CoherenceDrivenAgentImpl(
   def stop() = ???
 
 
+  def mkGraph(nodes: Set[ClassesRelatedInformation]) = newGraph(nodes)
 
   // CoherenceDrivenInterface
 
 //  def canBeAccepted(value: Discipline, nStudents: Int) = ???
 //  def canBeAccepted(prop: ConcreteProposal[Time]) = ???
-//  def mkGraph(nodes: Set[ClassesRelatedInformation]) = ???
 //  def opinionAbout(g: CoherenceDrivenAgentImpl#Graph) = ???
 //  def makeDecision() = ???
 }
