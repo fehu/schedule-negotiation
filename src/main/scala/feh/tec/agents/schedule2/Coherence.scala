@@ -76,7 +76,7 @@ object Coherence extends GCoherence with GraphImplementation{
     {
       val coh = assessment.assessCoherence(c, g)
       if (coh.doubleValue > filterThreshold) ThisSolutionCandidate.ThisSolutionSuccess(g, c, coh.excluding0)
-      else ThisSolutionCandidate.ThisSolutionFailure(g, c, null) // todo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      else ThisSolutionCandidate.ThisSolutionFailure(g, c, "failed at " + c.toString) // todo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
 
@@ -96,7 +96,7 @@ object Coherence extends GCoherence with GraphImplementation{
       def defaultGraph = Await.result(ag.currentProposals.map(newGraph), ag.innerCmdTimeout.duration + 10.millis)
 
       /** The only relation: [[TimeConsistence]]. */
-      lazy val binaryRelationsWithin: Set[RelationBinary] = Set(new TimeConsistence)
+      lazy val binaryRelationsWithin: Set[Coherence.RelationBinary[Beliefs[Time]]] = Set(new TimeConsistence)
 
       /** Has none. */
       def binaryRelationsWithDefault = Set()
@@ -107,7 +107,7 @@ object Coherence extends GCoherence with GraphImplementation{
       def toDouble = Option apply _.value.toDouble
 
       /** Time Consistence binary relation. */
-      class TimeConsistence extends RelationBinary{
+      class TimeConsistence extends Coherence.RelationBinary[Beliefs[Time]]{
 
 
         def apply(v1: InformationPiece, v2: InformationPiece) = (v1, v2) match {
@@ -189,12 +189,12 @@ object Coherence extends GCoherence with GraphImplementation{
       def binaryRelationsWithDefault = Set()
 
       /** The only relation: [[ExternalOpinion]]. */
-      lazy val wholeRelations: Set[RelationWhole] = Set(new ExternalOpinion)
+      lazy val wholeRelations: Set[RelationWhole[External]] = Set(new ExternalOpinion)
 
       /** The external opinion is asked using [[ag.askCounterpartsOpinion]].
         * It is the main reason the context's [[Context.Result]] type is a [[Future]].
         */
-      class ExternalOpinion extends RelationWhole{
+      class ExternalOpinion extends RelationWhole[External]{
         def apply(v1: Graph) = Await.result(ag.askCounterpartsOpinion(v1), ag.externalTimeout.duration + 10.millis)
       }
 
@@ -283,7 +283,11 @@ object CoherenceDrivenAgent{
 
 
   /** Manages agent's known proposals. */
-  class Proposals[Time](c: CoherenceDrivenInterface[Time])(implicit aRef: NegotiatingAgentRef) extends CInterfaceActor{
+  class Proposals[Time](c: CoherenceDrivenInterface[Time],
+                        implicit val aRef: NegotiatingAgentRef,
+                        implicit val exc: ExecutionContext)
+    extends CInterfaceActor
+  {
     val proposals = mutable.HashSet.empty[ConcreteProposal[Time]]
     val counterparts = mutable.HashMap.empty[Discipline, mutable.HashSet[NegotiatingAgentRef]]
 
@@ -304,7 +308,10 @@ object CoherenceDrivenAgent{
     }
   }
 
-  class Opinions[Time](c: CoherenceDrivenInterface[Time])(implicit aRef: NegotiatingAgentRef, exc: ExecutionContext)
+  class Opinions[Time](c: CoherenceDrivenInterface[Time],
+                       implicit val aRef: NegotiatingAgentRef,
+                       implicit val exc: ExecutionContext
+                      )
     extends CInterfaceActor
   {
     def receive = {
@@ -314,11 +321,17 @@ object CoherenceDrivenAgent{
     }
   }
 
-  class Argue[Time](c: CoherenceDrivenInterface[Time]) extends CInterfaceActor{
+  class Argue[Time](c: CoherenceDrivenInterface[Time],
+                    implicit val aRef: NegotiatingAgentRef,
+                    implicit val exc: ExecutionContext)
+    extends CInterfaceActor
+  {
     def receive = Map.empty // todo
   }
 
-  def mkProps[A <: CInterfaceActor : ClassTag](c: CoherenceDrivenInterface[_]) = Props(scala.reflect.classTag[A].runtimeClass, c)
+  def mkProps[A <: CInterfaceActor : ClassTag](c: CoherenceDrivenInterface[_])
+                                              (implicit aRef: NegotiatingAgentRef, exc: ExecutionContext)
+    = Props(scala.reflect.classTag[A].runtimeClass, c, aRef, exc)
 }
 
 
@@ -407,9 +420,12 @@ abstract class CoherenceDrivenAgentImpl(aFactory: ActorRefFactory)
 
   val Reporting = new ReportingConfig(false, false, false)
 
-  def start() = main ! SystemMessage.Start
+  def start() = {
+    println("Starting " + this)
+    main ! Command.MakeDecision
+  }
 
-  def stop() = ???
+  def stop() = ??? // TODO
 
 
   def mkGraph(nodes: Set[ClassesRelatedInformation]) = newGraph(nodes)

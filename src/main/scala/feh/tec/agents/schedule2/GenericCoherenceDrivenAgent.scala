@@ -1,12 +1,10 @@
 package feh.tec.agents.schedule2
 
 import akka.util.Timeout
-import feh.tec.agents.comm.{NegotiatingAgentId, SystemAgentRef}
-import feh.tec.agents.schedule2.Coherence.Contexts._
+import feh.tec.agents.schedule2.Coherence._
 import feh.util.InUnitInterval
-import Coherence._
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
   *
@@ -17,7 +15,7 @@ trait GenericCoherenceDrivenAgent extends CoherenceDrivenAgentImpl{
   def relations: AgentRelations
   def preferencesThreshold: () => InUnitInterval.Including
 
-  val filteringCtxs = Seq(
+  lazy val filteringCtxs = Seq(
     Coherence.ContextContainer(contexts.obligations),
     Coherence.ContextContainer(contexts.preferences)
   )
@@ -38,15 +36,15 @@ trait GenericCoherenceDrivenAgent extends CoherenceDrivenAgentImpl{
   val contexts: contexts = new contexts{
 
     val obligations = new Contexts.Obligations(newGraph(internalKnowledge.obligations)) {
-      def wholeRelations: Set[RelationWhole] = relations.obligations.whole.asInstanceOf
-      def binaryRelationsWithin: Set[RelationBinary] = relations.obligations.binaryWithin.asInstanceOf
-      def binaryRelationsWithDefault: Set[RelationBinary] = relations.obligations.binaryWithDefaultGraph.asInstanceOf
+      def wholeRelations: Set[RelationWhole[Contexts.Obligations]] = relations.obligations.whole.asInstanceOf
+      def binaryRelationsWithin: Set[RelationBinary[Contexts.Obligations]] = relations.obligations.binaryWithin.asInstanceOf
+      def binaryRelationsWithDefault: Set[RelationBinary[Contexts.Obligations]] = relations.obligations.binaryWithDefaultGraph.asInstanceOf
     }
 
     val preferences = new Contexts.Preferences(newGraph(internalKnowledge.preferences), preferencesThreshold){
-      def wholeRelations: Set[RelationWhole] = relations.preferences.whole.asInstanceOf
-      def binaryRelationsWithin: Set[RelationBinary] = relations.preferences.binaryWithin.asInstanceOf
-      def binaryRelationsWithDefault: Set[RelationBinary] = relations.preferences.binaryWithDefaultGraph.asInstanceOf
+      def wholeRelations: Set[RelationWhole[Contexts.Preferences]] = relations.preferences.whole.asInstanceOf
+      def binaryRelationsWithin: Set[RelationBinary[Contexts.Preferences]] = relations.preferences.binaryWithin.asInstanceOf
+      def binaryRelationsWithDefault: Set[RelationBinary[Contexts.Preferences]] = relations.preferences.binaryWithDefaultGraph.asInstanceOf
     }
 
   }
@@ -71,22 +69,8 @@ trait GenericCoherenceDrivenAgent extends CoherenceDrivenAgentImpl{
       candidates <- Coherence.propagateSolutions(x.toSet, ctxs)
     } contexts.intentions accumulate candidates.toSeq
 
-    //    val candidate = for {
-//      initial <- contexts.beliefs.process(newGraph())
-//      x = initial.map(SomeSolutionSuccess apply _.asInstanceOf) // TODO: asInstanceOf
-//      candidates <- Coherence.propagateSolutions(x.toSet, ctxs)
-//    } candidates match {
-//      case set if set.size == 1 =>
-//    }
-
     contexts.intentions.processAccumulated()
   }
-//  {
-//    val initial = contexts.beliefs.process(newGraph())
-//    val ctxs = Seq(contexts.obligations, contexts.preferences, contexts.external)
-//    val candidates = Coherence.propagateSolutions(initial, ctxs)
-//    ??? // TODO
-//  }
 }
 
 object GenericCoherenceDrivenAgent{

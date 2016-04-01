@@ -5,6 +5,7 @@ import akka.util.Timeout
 import feh.tec.agents.comm.{NegotiatingAgentId, SystemAgentRef}
 import feh.tec.agents.schedule2.GenericCoherenceDrivenAgent.Capacity.CanTeach
 import feh.util.InUnitInterval
+import feh.util.InUnitInterval.Including
 
 
 class Professor(actorFactory: ActorRefFactory,
@@ -22,6 +23,8 @@ class Professor(actorFactory: ActorRefFactory,
   extends CoherenceDrivenAgentImpl(actorFactory) with GenericCoherenceDrivenAgent
 {
 
+  start()
+
   def canTeach(d: Discipline): Boolean = internalKnowledge.capacities.exists{
     case CanTeach(ds) => ds contains d
     case _            => false
@@ -38,15 +41,16 @@ object Professor{
 
   class Creator(val actorFactory: ActorRefFactory, val timeDescriptor: TimeDescriptor[DTime],
                 val reportTo: SystemAgentRef,
-                val internalTimeout: Timeout, val externalTimeout: Timeout, val decisionMakingTimeout: Timeout,
-                val externalSatisfactionThreshold: () => InUnitInterval.Including,
-                val preferencesThreshold: () => InUnitInterval.Including)
+                val internalTimeout: Timeout, val externalTimeout: Timeout, val decisionMakingTimeout: Timeout)
     extends AgentCreator[Professor]
   {
 
-    protected def createInternal(id: NegotiatingAgentId, internalKnowledge: Knowledge, relations: AgentRelations) = Props{
-      new Professor(actorFactory, id, timeDescriptor, reportTo, internalTimeout, externalTimeout,
-        decisionMakingTimeout, internalKnowledge, relations, externalSatisfactionThreshold, preferencesThreshold)
-    }
+
+    protected def createInternal(id: NegotiatingAgentId, internalKnowledge: Knowledge, relations: AgentRelations,
+                                 externalSatisfactionThreshold: () => Including, preferencesThreshold: () => Including) =
+      Props{
+        new Professor(actorFactory, id, timeDescriptor, reportTo, internalTimeout, externalTimeout,
+          decisionMakingTimeout, internalKnowledge, relations, externalSatisfactionThreshold, preferencesThreshold)
+      }
   }
 }

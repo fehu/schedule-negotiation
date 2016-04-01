@@ -2,7 +2,9 @@ package feh.tec.agents.schedule2
 
 import akka.actor.{Props, ActorRefFactory}
 import akka.util.Timeout
-import feh.tec.agents.comm.{NegotiatingAgentRef, NegotiatingAgentId, SystemAgentRef, Agent}
+import feh.tec.agents.comm._
+import feh.tec.agents.schedule2.InternalKnowledge.{Preference, Obligation}
+import feh.util.InUnitInterval
 
 
 /**
@@ -17,24 +19,46 @@ trait AgentCreator[A <: CoherenceDrivenAgentImpl] {
 
   def create(id: NegotiatingAgentId,
              internalKnowledge: Knowledge,
-             relations: AgentRelations): NegotiatingAgentRef =
+             relations: AgentRelations,
+             externalSatisfactionThreshold: () => InUnitInterval.Including,
+             preferencesThreshold: () => InUnitInterval.Including): NegotiatingAgentRef =
   {
-    val ref = actorFactory.actorOf(createInternal(id, internalKnowledge, relations))
+    val ref = actorFactory.actorOf(
+      createInternal(id, internalKnowledge, relations, externalSatisfactionThreshold, preferencesThreshold)
+    )
     NegotiatingAgentRef(id, ref)
   }
 
-  protected def createInternal(id: NegotiatingAgentId, internalKnowledge: Knowledge, relations: AgentRelations): Props
-}
+  def create(d: AgentDescriptor): NegotiatingAgentRef =
+    create(NegotiatingAgentId(d.id, d.role),
+      d.internalKnowledge,
+      d.relations,
+      d.externalSatisfactionThreshold,
+      d.preferencesThreshold
+    )
 
-object AgentContextRelations{
-
+  protected def createInternal(id: NegotiatingAgentId, internalKnowledge: Knowledge, relations: AgentRelations,
+                               externalSatisfactionThreshold: () => InUnitInterval.Including,
+                               preferencesThreshold: () => InUnitInterval.Including): Props
 }
 
 /** Relations definition for agent's context. */
-case class AgentContextRelations[C <: Coherence.Context[C]](whole: Set[C#RelationWhole],
-                                                            binaryWithin: Set[C#RelationBinary],
-                                                            binaryWithDefaultGraph: Set[C#RelationBinary])
+case class AgentContextRelations[C <: Coherence.Context[C]](whole: Set[Coherence.RelationWhole[C]],
+                                                            binaryWithin: Set[Coherence.RelationBinary[C]],
+                                                            binaryWithDefaultGraph: Set[Coherence.RelationBinary[C]])
 
 case class AgentRelations(obligations: AgentContextRelations[Coherence.Contexts.Obligations],
                           preferences: AgentContextRelations[Coherence.Contexts.Preferences]
                          )
+
+
+case class AgentDescriptor(id: String,
+                           role: NegotiationRole,
+                           internalKnowledge: Knowledge,
+                           relations: AgentRelations,
+                           externalSatisfactionThreshold: () => InUnitInterval.Including,
+                           preferencesThreshold: () => InUnitInterval.Including
+                          )
+
+case class ObligationsContainer(ctx: AgentContextRelations[Coherence.Contexts.Obligations], knowledge: Set[Obligation])
+case class PreferencesContainer(ctx: AgentContextRelations[Coherence.Contexts.Preferences], knowledge: Set[Preference])

@@ -5,6 +5,7 @@ import akka.util.Timeout
 import feh.tec.agents.comm.{SystemAgentRef, NegotiatingAgentId}
 import feh.tec.agents.schedule2.GenericCoherenceDrivenAgent.Capacity.SearchesDisciplines
 import feh.util.InUnitInterval
+import feh.util.InUnitInterval.Including
 
 
 class Group(actorFactory: ActorRefFactory,
@@ -35,12 +36,13 @@ object Group{
 
   class Creator(val actorFactory: ActorRefFactory, val timeDescriptor: TimeDescriptor[DTime],
                 val reportTo: SystemAgentRef,
-                val internalTimeout: Timeout, val externalTimeout: Timeout, val decisionMakingTimeout: Timeout,
-                val externalSatisfactionThreshold: () => InUnitInterval.Including,
-                val preferencesThreshold: () => InUnitInterval.Including)
+                val internalTimeout: Timeout, val externalTimeout: Timeout, val decisionMakingTimeout: Timeout)
     extends AgentCreator[Professor]
   {
-    protected def createInternal(id: NegotiatingAgentId, internalKnowledge: Knowledge, relations: AgentRelations) =
+
+
+    protected def createInternal(id: NegotiatingAgentId, internalKnowledge: Knowledge, relations: AgentRelations,
+                                 externalSatisfactionThreshold: () => Including,  preferencesThreshold: () => Including) =
       Props( new Group(actorFactory, id, timeDescriptor, reportTo, internalTimeout, externalTimeout,
         decisionMakingTimeout, internalKnowledge, relations, externalSatisfactionThreshold, preferencesThreshold))
   }
