@@ -54,6 +54,8 @@ object ExternalKnowledge{
     def professor: NegotiatingAgentRef
     def classroom: NegotiatingAgentRef
 
+    def sharedBetween: Set[NegotiatingAgentRef] = Set(group, professor, classroom)
+
     /** Compares the linked agents and disciplines. */
     def isSameUnderneath(that: CompleteProposal) = this.discipline == that.discipline &&
                                                    this.group == that.group &&
@@ -64,6 +66,29 @@ object ExternalKnowledge{
 
   type ClassProposal[Time] = ConcreteProposal[Time] with CompleteProposal
 
+
+  case class CProposal[Time](day: DayOfWeek,
+                             begins: Time,
+                             duration: Time,
+                             discipline: Discipline,
+                             addressee: NegotiatingAgentRef)
+                            (implicit val timeDescriptor: TimeDescriptor[Time],
+                             sender: NegotiatingAgentRef)
+    extends ConcreteProposal[Time]
+  {
+    def sharedBetween = Set(sender, addressee)
+  }
+
+  case class CCProposal[Time](day: DayOfWeek,
+                              begins: Time,
+                              duration: Time,
+                              discipline: Discipline,
+                              group: NegotiatingAgentRef,
+                              classroom: NegotiatingAgentRef,
+                              professor: NegotiatingAgentRef
+                              )
+                             (implicit val timeDescriptor: TimeDescriptor[Time])
+    extends ConcreteProposal[Time] with CompleteProposal
 
   trait Opinion[Time] extends ExternalKnowledge {
     def by: NegotiatingAgentRef

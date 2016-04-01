@@ -1,14 +1,14 @@
 package feh.tec.agents.schedule2
 
-import akka.actor.{ActorRefFactory, Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, ActorRefFactory, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import feh.tec.agents.comm._
 import feh.tec.agents.comm.agent.Coherence.GraphImplementation
-import feh.tec.agents.comm.agent.{AgentActor, Coherence => GCoherence}
+import feh.tec.agents.comm.agent.{Coherence => GCoherence}
 import feh.tec.agents.schedule2.Coherence.Contexts.Intentions
 import feh.tec.agents.schedule2.ExternalKnowledge.{AnyProposal, ClassProposal, ConcreteProposal}
-import feh.tec.agents.schedule2.InternalKnowledge.{Capacity, Preference, Obligation}
+import feh.tec.agents.schedule2.InternalKnowledge.{Capacity, Obligation, Preference}
 import feh.util._
 
 import scala.collection.mutable
@@ -212,8 +212,8 @@ object Coherence extends GCoherence with GraphImplementation{
       * Accumulates the [[SolutionCandidate]]s in order to select the next action.
       */
     abstract class Intentions extends AccumulatingContextImpl[Intentions] {
-      type Input = SolutionCandidate[_]
-      type AResult = Boolean // Unit
+      type Input = SomeSolutionCandidate
+      type AResult = Option[SomeSolutionSuccess] // Unit
 
 //      def processAccumulated() = ??? // todo
     }
@@ -293,7 +293,7 @@ object CoherenceDrivenAgent{
 
     def receive = {
       case ClassProposalMsg(prop: ConcreteProposal[Time]) => sender() ! YesNoMsg(c.canBeAccepted(prop))
-      case ClassProposalMsg(_)                              => sender() ! NotEnoughInfo
+      case ClassProposalMsg(_)                            => sender() ! NotEnoughInfo
 
       case msg: AbstractProposalMsg =>
         val can = c.canBeAccepted(msg.value, msg.nStudents)
@@ -360,6 +360,8 @@ abstract class CoherenceDrivenAgentImpl(aFactory: ActorRefFactory)
 
   val externalSatisfactionThreshold: () => InUnitInterval.Including
 
+  implicit val timeDescriptor: TimeDescriptor[Time]
+
   import CoherenceDrivenAgent._
 
   type Action = () => Unit
@@ -387,7 +389,28 @@ abstract class CoherenceDrivenAgentImpl(aFactory: ActorRefFactory)
     val beliefs = new Coherence.Contexts.Beliefs(cAgent)
     val external = new Coherence.Contexts.External(cAgent, externalSatisfactionThreshold)
     val intentions = new Intentions {
-      def processAccumulated(): AResult = ??? // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      def processAccumulated(): AResult = {
+        val (acceptable, failed) = getAccumulated.span(_.isSuccess)
+
+        val bestAcceptable = if(acceptable.nonEmpty) Some(SomeSolutionSuccess(acceptable.maxBy(_.coherence).asInstanceOf)) else None
+
+        val failedExternal = failed
+          .collect{ case f if f.isFailure => SomeSolutionCandidate(f.get.failure.get.asInstanceOf) }// .asInstanceOf[SolutionFailure[C] forSome {type C <: Context[C]}]
+          .withFilter(_.get.asInstanceOf[SolutionFailure[_]].failedAt.isInstanceOf[Coherence.Contexts.External])
+          .map{ case SomeSolutionCandidate(c) => c .asInstanceOf[SolutionFailure[Contexts.External]] }
+
+        val bestFExtOpt =
+          if (failedExternal.nonEmpty) Some(SomeSolutionSuccess(failedExternal.map(_.previous.get).maxBy(_.v).asInstanceOf))
+          else None
+
+        PartialFunction.condOpt(bestAcceptable -> bestFExtOpt) {
+          case (Some(bA), Some(bF)) =>
+            val arg = bF.get.coherence > bA.get.coherence
+            if (arg) bF else bA
+          case (Some(best), _) => best
+          case (_, Some(best)) => best
+        }
+      }
     }
   }
 

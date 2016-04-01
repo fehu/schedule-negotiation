@@ -1,7 +1,9 @@
 package feh.tec.agents.schedule2
 
 import akka.util.Timeout
+import feh.tec.agents.comm.NegotiatingAgentRef
 import feh.tec.agents.schedule2.Coherence._
+import feh.tec.agents.schedule2.ExternalKnowledge.CProposal
 import feh.util.InUnitInterval
 
 import scala.concurrent.Future
@@ -55,7 +57,7 @@ trait GenericCoherenceDrivenAgent extends CoherenceDrivenAgentImpl{
     *
     * @return satisfied
     */
-  def makeDecision(timeout: Timeout): Boolean = {
+  def makeDecision(timeout: Timeout): Boolean = { // TODO: timeout not used
     val ctxs = Seq(
       ContextContainer(contexts.obligations),
       ContextContainer(contexts.preferences),
@@ -67,9 +69,24 @@ trait GenericCoherenceDrivenAgent extends CoherenceDrivenAgentImpl{
       initial <- contexts.beliefs.process(newGraph())
       x = initial.map(SomeSolutionSuccess apply _.asInstanceOf) // TODO: asInstanceOf
       candidates <- Coherence.propagateSolutions(x.toSet, ctxs)
-    } contexts.intentions accumulate candidates.toSeq
+    } contexts.intentions accumulate candidates.toSeq.map(SomeSolutionCandidate apply _.asInstanceOf)
 
-    contexts.intentions.processAccumulated()
+    contexts.intentions.processAccumulated() match {
+      case Some(sss@SomeSolutionSuccess(sol)) =>
+        if (sol.c.isInstanceOf[Contexts.External]) askConfirmation(sss)
+        else argueAbout(sss)
+      case _ =>
+        newProposal(contexts.intentions.getAccumulated)
+    }
+  }
+
+  def askConfirmation(sol: SomeSolutionSuccess): Boolean = ???
+
+  def argueAbout(sol: SomeSolutionSuccess): Boolean = ???
+
+  def newProposal(fails: Seq[SomeSolutionCandidate]): Boolean = {
+    def newProp(to: NegotiatingAgentRef) = CProposal(???, ???, ???, ???, ???)
+    proposalsHandler ! Command.AddProposal(prop)
   }
 }
 
